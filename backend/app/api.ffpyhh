@@ -1,0 +1,92 @@
+from fastapi import APIRouter, Depends, File, UploadFile, HTTPException
+from sqlalchemy.orm import Session
+from datetime import datetime
+
+from app import fifo_engine, billing, crud, schemas, auth
+from app.db import get_db
+
+router = APIRouter(prefix="/auth", tags=["Auth"])
+
+# ---------- AUTH ----------
+
+
+@router.post("/signup", response_model=schemas.UserOut)
+def signup(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+    existing = crud.get_user_by_email(db, user_in.email)
+    if existing:
+        raise HTTPException(status_code=400, detail="User already exists")
+    return crud.create_user(db, user_in.email, user_in.password)
+
+
+@router.post("/token", response_model=schemas.Token)
+def login(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
+    user = crud.authenticate_user(db, user_in.email, user_in.password)
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = auth.create_access_token(data={"sub": user.email})
+    return {"access_token": token, "token_type": "bearer"}
+
+
+# ---------- BILLING ----------
+
+
+@router.post("/billing/create_customer")
+def create_customer(
+    current_user=Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    cust = billing.create_or_get_customer(current_user.email)
+    crud.update_user_stripe_ids(db, current_user, customer_id=cust["id"])
+    return {"stripe_customer_id": cust["id"]}
+
+
+@router.post("/billing/create_subscription")
+def create_subscription(
+    current_user=Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    if not current_user.stripe_customer_id:
+        raise HTTPException(status_code=400, detail="Create customer first")
+
+    sub, item_id = billing.create_metered_subscription(
+        current_user.stripe_customer_id
+    )
+    crud.update_user_stripe_ids(
+        db,
+        current_user,
+        subscription_id=sub["id"],
+        subscription_item_id=item_id,
+    )
+    return {"subscription_id": sub["id"]}
+
+
+# ---------- CSV UPLOAD ----------
+
+
+def sort_by_ts(rows):
+    try:
+        return sorted(rows, key=lambda x: datetime.fromisoformat(x["ts"]))
+    except Exception:
+        return sorted(rows, key=lambda x: x["ts"])
+
+
+@router.post("/upload_csv")
+async def upload_csv(
+    file: UploadFile = File(...),
+    current_user=Depends(auth.get_current_user),
+    db: Session = Depends(get_db),
+):
+    content = await file.read()
+    text = content.decode("utf-8")
+
+    rows = fifo_engine.parse_csv_text(text)
+    if not rows:
+        raise HTTPException(status_code=400, detail="CSV file is empty or invalid")
+
+    sorted_rows = sort_by_ts(rows)
+
+    # You can persist or process rows here
+    return {
+        "rows_count": len(sorted_rows),
+        "rows": sorted_rows,
+    }

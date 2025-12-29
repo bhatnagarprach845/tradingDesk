@@ -1,0 +1,12 @@
+DATABASE_URL=postgresql://username:password@localhost:5432/fifo_saas_db
+JWT_SECRET=supersecretjwtkey
+JWT_EXP_SECONDS=3600
+STRIPE_PRICE_METERED_ID=price_xxx
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+FRONTEND_URL=http://localhost:5173
+REACT_APP_API_URL=http://localhost:8000
+AWS_ACCESS_KEY_ID=xxxx
+AWS_SECRET_ACCESS_KEY=xxxx
+AWS_REGION=us-east-1
+S3_BUCKET_NAME=fifo-saas-outputs
