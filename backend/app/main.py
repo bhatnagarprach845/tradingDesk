@@ -7,9 +7,12 @@ from app import models  # <--- CRITICAL: MUST IMPORT MODELS HERE
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # This runs when the Vercel serverless function wakes up
-    # It creates tables if they don't exist
-    Base.metadata.create_all(bind=engine)
+    print("LOG: Lifespan starting - Creating tables...")
+    try:
+        Base.metadata.create_all(bind=engine)
+        print("LOG: Tables created successfully or already exist.")
+    except Exception as e:
+        print(f"LOG: Error creating tables: {e}")
     yield
 app = FastAPI(lifespan=lifespan,title="FIFO SaaS API")
 app.include_router(auth.router)
