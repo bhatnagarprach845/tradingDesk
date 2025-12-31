@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, upload
 from app.db import engine, Base
+from app import models  # <--- CRITICAL: MUST IMPORT MODELS HERE
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
