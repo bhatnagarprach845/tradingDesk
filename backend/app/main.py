@@ -10,7 +10,7 @@ async def lifespan(app: FastAPI):
     # It creates tables if they don't exist
     Base.metadata.create_all(bind=engine)
     yield
-app = FastAPI(title="FIFO SaaS API")
+app = FastAPI(lifespan=lifespan,title="FIFO SaaS API")
 app.include_router(auth.router)
 app.include_router(upload.router)
 app.add_middleware(
