@@ -9,7 +9,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./fifo_demo.db")
 
 # 2. Fix for Heroku/Postgres prefix (if needed)
 if DATABASE_URL.startswith("postgres://"):
-    SQLALCHEMY_DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
 # 3. Detect if we are in production to toggle 'echo'
 IS_PROD = os.getenv("VERCEL_ENV") == "production"
