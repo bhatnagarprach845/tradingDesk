@@ -25,6 +25,10 @@ IS_PROD = os.getenv("VERCEL_ENV") == "production"
 engine_args = {}
 if DATABASE_URL.startswith("sqlite"):
     engine_args["connect_args"] = {"check_same_thread": False}
+else:
+    # PROD SETTINGS: Essential for Neon/Vercel
+    engine_args["pool_pre_ping"] = True  # Resets stale connections
+    engine_args["pool_recycle"] = 300  # Refreshes connections every 5 mins
 
 engine = create_engine(
     DATABASE_URL,
