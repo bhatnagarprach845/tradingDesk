@@ -5,8 +5,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from . import auth, upload
 
 # Use relative imports if files are in the same directory
-from app.db import engine, Base
-from app import models
+from ..db import engine, Base
+from .. import models
 
 # 1. FORCE CREATION AT TOP LEVEL (More reliable for Vercel)
 print("LOG: Application Startup - Initializing Database...")
