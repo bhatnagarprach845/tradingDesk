@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+// Import the base URL from your config file
+import { API_BASE } from '../api'; // Adjust path if necessary
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState('');
@@ -14,7 +16,7 @@ function Login({ onLogin }) {
     setError('');
 
     try {
-      const res = await axios.post('http://localhost:8000/auth/token', { email, password });
+      const res = await axios.post(`${API_BASE}/auth/token`, { email, password });
       onLogin(res.data.access_token);
     } catch (err) {
       setError(err.response?.data?.detail || 'Invalid credentials');
