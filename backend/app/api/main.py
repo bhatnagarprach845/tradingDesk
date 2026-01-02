@@ -2,11 +2,9 @@ import os
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-from . import auth, upload
-
-# Use relative imports if files are in the same directory
-from ..db import engine, Base
-from .. import models
+from app.api import auth, upload  # Updated
+from app.db import engine, Base    # Updated
+from app import models             # Updated1
 
 # 1. FORCE CREATION AT TOP LEVEL (More reliable for Vercel)
 print("LOG: Application Startup - Initializing Database...")
