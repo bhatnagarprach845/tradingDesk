@@ -1,15 +1,20 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
+from sqlalchemy import text
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./fifo_demo.db")
 
+
+
 # 2. Fix for Heroku/Postgres prefix (if needed)
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+print("DATABASE_URL =", os.getenv("DATABASE_URL"))
 
 # 3. Detect if we are in production to toggle 'echo'
 IS_PROD = os.getenv("VERCEL_ENV") == "production"

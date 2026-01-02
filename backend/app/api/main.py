@@ -1,16 +1,20 @@
 import os
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
+from sqlalchemy import text
 from fastapi.middleware.cors import CORSMiddleware
 from app.api import auth, upload  # Updated
 from app.db import engine, Base    # Updated
 from app import models             # Updated1
 
+print("DATABASE_URL =", os.getenv("DATABASE_URL"))
 # 1. FORCE CREATION AT TOP LEVEL (More reliable for Vercel)
 print("LOG: Application Startup - Initializing Database...")
 try:
-    Base.metadata.create_all(bind=engine)
-    print("LOG: Database tables verified/created.")
+    with engine.begin() as conn:
+        Base.metadata.create_all(bind=conn)
+        #Base.metadata.create_all(bind=engine)
+        print("LOG: Database tables verified/created.")
 except Exception as e:
     print(f"LOG: DATABASE ERROR: {e}")
 
