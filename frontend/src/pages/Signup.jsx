@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_BASE } from '../api'; // Adjust path if necessary
 
 function Signup({ onSignup }) {
   const [email, setEmail] = useState('');
@@ -30,7 +31,7 @@ function Signup({ onSignup }) {
     setSuccess('');
 
     try {
-      await axios.post('http://localhost:8000/auth/signup', { email, password });
+      await axios.post(`${API_BASE}/auth/signup`, { email, password });
       setSuccess('Signup successful! Please login.');
       onSignup();
     } catch (err) {
