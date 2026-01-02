@@ -39,6 +39,8 @@ async def db_check():
         return {"status": "connected", "database": str(engine.url.database)}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
