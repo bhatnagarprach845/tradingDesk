@@ -1,4 +1,11 @@
-export const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
+const isProd = import.meta.env.PROD;
+
+export const API_BASE = isProd
+  ? "https://trading-desk-pb845.vercel.app/api"
+  : "http://localhost:8000";
+
+
+//export const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:8000'
 export async function uploadCsvFile(file){
     const fd = new FormData()
     fd.append('file', file)
