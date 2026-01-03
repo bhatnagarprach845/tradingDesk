@@ -1,7 +1,7 @@
 const isProd = import.meta.env.PROD;
 
 export const API_BASE = isProd
-  ? "https://trading-desk-pb845.vercel.app/api"
+  ? "https://trading-desk-pb845.vercel.app"
   : "http://localhost:8000";
 
 
