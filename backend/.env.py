@@ -1,4 +1,5 @@
-DATABASE_URL=postgresql://username:password@localhost:5432/fifo_saas_db
+#DATABASE_URL=postgresql://username:password@localhost:5432/fifo_saas_db
+DATABASE_URL=postgresql://neondb_owner:npg_lDufWE50JQXc@ep-restless-waterfall-a4gec24c-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 JWT_SECRET=supersecretjwtkey
 JWT_EXP_SECONDS=3600
 STRIPE_PRICE_METERED_ID=price_xxx
