@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan, title="FIFO SaaS API")
 app.include_router(auth.router)
-app.include_router(upload.router, prefix="/upload")
+app.include_router(upload.router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "https://trading-desk-pb845.vercel.app", "http://localhost:3000"],
