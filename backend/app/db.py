@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 
 # Load .env only locally
-if os.getenv("VERCEL_ENV") != "production":
+if os.getenv("PROD_ENV") != "production":
     load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL")
@@ -20,7 +20,7 @@ if DATABASE_URL.startswith("postgres://"):
 
 print("USING DATABASE_URL =", DATABASE_URL)
 
-IS_PROD = os.getenv("VERCEL_ENV") == "production"
+IS_PROD = os.getenv("PROD_ENV") == "production"
 
 engine_args = {}
 if DATABASE_URL.startswith("sqlite"):
