@@ -36,7 +36,8 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return {"id": new_user.id, "email": new_user.email}
 
-@router.post("/token", response_model=Token)
+# //@router.post("/token", response_model=Token)
+@router.post("/token")
 def login(user: UserCreate, db: Session = Depends(get_db)):
 
     db_user = db.query(User).filter(User.email == user.email).first()
@@ -48,7 +49,7 @@ def login(user: UserCreate, db: Session = Depends(get_db)):
     # CRITICAL: If token is bytes, decode it to string
     if isinstance(token, bytes):
         token = token.decode("utf-8")
-    return {"access_token": token, "token_type": "bearer"}
+    return {"access_token": str(token), "token_type": "bearer"}
 
 # @router.post("/token", response_model=Token)
 # def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
