@@ -38,11 +38,13 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/token", response_model=Token)
 def login(user: UserCreate, db: Session = Depends(get_db)):
+
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     payload = {"sub": str(db_user.id), "exp": datetime.utcnow() + timedelta(hours=24)}
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    print(f"DEBUG: Token generated is {token}")
     # CRITICAL: If token is bytes, decode it to string
     if isinstance(token, bytes):
         token = token.decode("utf-8")
