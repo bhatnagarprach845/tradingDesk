@@ -43,6 +43,9 @@ def login(user: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     payload = {"sub": str(db_user.id), "exp": datetime.utcnow() + timedelta(hours=24)}
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    # CRITICAL: If token is bytes, decode it to string
+    if isinstance(token, bytes):
+        token = token.decode("utf-8")
     return {"access_token": token, "token_type": "bearer"}
 
 # @router.post("/token", response_model=Token)
