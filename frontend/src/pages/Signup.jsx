@@ -1,74 +1,43 @@
 import React, { useState } from 'react';
+import { generateClient } from 'aws-amplify/api';
 import axios from 'axios';
-import { API_BASE } from '../api'; // Adjust path if necessary
+import { API_BASE, USE_AMPLIFY } from '../api';
 
 function Signup({ onSignup }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const validatePassword = (pwd) => {
-    // At least 8 chars, one number, one uppercase, one lowercase
-    const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
-    return regex.test(pwd);
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validatePassword(password)) {
-      setError(
-        'Password must be at least 8 characters long and include uppercase, lowercase, and a number.'
-      );
-      setSuccess('');
-      return;
-    }
-
     setLoading(true);
     setError('');
-    setSuccess('');
 
     try {
-      await axios.post(`${API_BASE}/auth/signup`, { email, password });
-      setSuccess('Signup successful! Please login.');
+      if (USE_AMPLIFY) {
+        const client = generateClient();
+        await client.queries.signup({ email, password });
+      } else {
+        await axios.post(`${API_BASE}/auth/signup`, { email, password });
+      }
+      alert('Signup successful!');
       onSignup();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Error signing up');
+      console.error(err);
+      setError('Signup failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: '400px', margin: '0 auto' }}>
-      <h2>Signup</h2>
-
+    <form onSubmit={handleSubmit}>
+      <h2>Signup ({USE_AMPLIFY ? 'Amplify' : 'Local'})</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>{success}</p>}
-
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-      <br />
-
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
-      <br />
-
-      <button type="submit" disabled={loading}>
-        {loading ? 'Signing up...' : 'Signup'}
-      </button>
+      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Email" />
+      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Password" />
+      <button type="submit" disabled={loading}>Signup</button>
     </form>
   );
 }

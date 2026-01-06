@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
+import { generateClient } from 'aws-amplify/api'; // Use /api or /data
 import axios from 'axios';
-// Import the base URL from your config file
-import { API_BASE } from '../api'; // Adjust path if necessary
+import { API_BASE, USE_AMPLIFY } from '../api';
 
 function Login({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,63 +15,39 @@ function Login({ onLogin }) {
     setError('');
 
     try {
-      const res = await axios.post(`${API_BASE}/auth/token`, { email, password });
-      console.log("LOGIN RESPONSE:", res.data);
-      onLogin(res.data.access_token);
-      const data = await res.json();
+      let jwt = null;
 
-      // DEBUGGING STEPS:
-        console.log("Full Data Object:", data);
+      if (USE_AMPLIFY) {
+        // Create the client ONLY when the button is clicked
+        const client = generateClient();
 
-      if (data.access_token) {
-         console.log("Token Found:", data.access_token);
+        const response = await client.queries.login({ email, password });
+        jwt = response.data?.login;
       } else {
-         console.log("Key 'access_token' is missing. Available keys:", Object.keys(data));
+        const res = await axios.post(`${API_BASE}/auth/token`, { email, password });
+        jwt = res.data.access_token;
+      }
 
-  }
+      if (jwt) {
+        onLogin(jwt);
+      } else {
+        setError('No token returned from server.');
+      }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Invalid credentials');
+      console.error(err);
+      setError(err.response?.data?.detail || 'Login failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ maxWidth: '400px', margin: '0 auto' }}>
-      <h2>Login</h2>
+    <form onSubmit={handleSubmit}>
+      <h2>Login ({USE_AMPLIFY ? 'Amplify' : 'Local'})</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-      />
-      <br />
-
-      <input
-        type={showPassword ? 'text' : 'password'}
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        required
-      />
-      <br />
-
-      <label>
-        <input
-          type="checkbox"
-          checked={showPassword}
-          onChange={() => setShowPassword(!showPassword)}
-        />
-        Show Password
-      </label>
-      <br />
-
-      <button type="submit" disabled={loading}>
-        {loading ? 'Logging in...' : 'Login'}
-      </button>
+      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Email" />
+      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Password" />
+      <button type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
     </form>
   );
 }
