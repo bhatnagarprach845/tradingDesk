@@ -19,6 +19,17 @@ function Login({ onLogin }) {
       const res = await axios.post(`${API_BASE}/auth/token`, { email, password });
       console.log("LOGIN RESPONSE:", res.data);
       onLogin(res.data.access_token);
+      const data = await res.json();
+
+      // DEBUGGING STEPS:
+        console.log("Full Data Object:", data);
+
+      if (data.access_token) {
+         console.log("Token Found:", data.access_token);
+      } else {
+         console.log("Key 'access_token' is missing. Available keys:", Object.keys(data));
+
+  }
     } catch (err) {
       setError(err.response?.data?.detail || 'Invalid credentials');
     } finally {
