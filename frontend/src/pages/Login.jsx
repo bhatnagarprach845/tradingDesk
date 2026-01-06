@@ -17,6 +17,7 @@ function Login({ onLogin }) {
 
     try {
       const res = await axios.post(`${API_BASE}/auth/token`, { email, password });
+      console.log("LOGIN RESPONSE:", res.data);
       onLogin(res.data.access_token);
     } catch (err) {
       setError(err.response?.data?.detail || 'Invalid credentials');

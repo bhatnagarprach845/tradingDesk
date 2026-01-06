@@ -1,5 +1,10 @@
-const isProd = import.meta.env.PROD;
 
+import { Amplify } from "aws-amplify";
+import outputs from "C:/Users/bhatn/PycharmProjects/fifo-saas/amplify_outputs.json"; // <--- This line is the link!
+
+Amplify.configure(outputs);
+
+const isProd = import.meta.env.PROD;
 export const API_BASE = isProd
   ? "https://main.di8orikvycv6h.amplifyapp.com"
   : "http://localhost:8000";
