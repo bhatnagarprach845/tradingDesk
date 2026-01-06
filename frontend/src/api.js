@@ -2,7 +2,7 @@
 
 const isProd = import.meta.env.PROD;
 export const API_BASE = isProd
-  ? "https://main.di8orikvycv6h.amplifyapp.com"
+  ? "https://t5urjqaranbzpoboed7qjnwdp4.appsync-api.us-east-1.amazonaws.com/graphql"
   : "http://localhost:8000";
 
 
