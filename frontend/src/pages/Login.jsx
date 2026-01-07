@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generateClient } from 'aws-amplify/api'; // Use /api or /data
+import { generateClient } from 'aws-amplify/api';
 import axios from 'axios';
 import { API_BASE, USE_AMPLIFY } from '../api';
 
@@ -18,36 +18,39 @@ function Login({ onLogin }) {
       let jwt = null;
 
       if (USE_AMPLIFY) {
-        // Create the client ONLY when the button is clicked
         const client = generateClient();
-
-        const response = await client.queries.login({ email, password });
-        jwt = response.data?.login;
+        const loginGql = `query Login($email: String!, $password: String!) {
+          login(email: $email, password: $password)
+        }`;
+        const res = await client.graphql({
+          query: loginGql,
+          variables: { email, password }
+        });
+        jwt = res.data.login;
       } else {
         const res = await axios.post(`${API_BASE}/auth/token`, { email, password });
         jwt = res.data.access_token;
       }
 
-      if (jwt) {
-        onLogin(jwt);
-      } else {
-        setError('No token returned from server.');
-      }
+      if (jwt) onLogin(jwt);
+      else setError('Login failed: Invalid credentials');
     } catch (err) {
-      console.error(err);
-      setError(err.response?.data?.detail || 'Login failed');
+      console.error("Auth Error:", err);
+      setError(err.response?.data?.detail || 'Server error occurred');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} style={{maxWidth: '400px', margin: '20px auto'}}>
       <h2>Login ({USE_AMPLIFY ? 'Amplify' : 'Local'})</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Email" />
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Password" />
-      <button type="submit" disabled={loading}>{loading ? 'Logging in...' : 'Login'}</button>
+      <input type="email" placeholder="Email" onChange={e => setEmail(e.target.value)} required style={{width: '100%', padding: '8px', marginBottom: '10px'}} />
+      <input type="password" placeholder="Password" onChange={e => setPassword(e.target.value)} required style={{width: '100%', padding: '8px', marginBottom: '10px'}} />
+      <button type="submit" disabled={loading} style={{width: '100%', padding: '10px'}}>
+        {loading ? 'Authenticating...' : 'Login'}
+      </button>
     </form>
   );
 }
