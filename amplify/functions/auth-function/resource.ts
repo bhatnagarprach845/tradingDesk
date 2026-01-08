@@ -9,7 +9,7 @@ const functionDir = path.dirname(fileURLToPath(import.meta.url));
 
 export const authFunction = defineFunction((scope) => {
   return new Function(scope, "auth-function", {
-    handler: "handler.handler", // Filename is handler.py, function name is handler
+    entry: "./handler.py", // Filename is handler.py, function name is handler
     runtime: Runtime.PYTHON_3_9, // Ensure this matches your local Python version
     timeout: Duration.seconds(20),
     // Point to the folder containing your handler.py and requirements.txt
