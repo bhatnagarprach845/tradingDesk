@@ -5,7 +5,7 @@ import os
 
 # SECRET_KEY should be set in Amplify Console -> Hosting -> Secrets
 # For local sandbox, use: npx ampx sandbox secret set JWT_SECRET
-SECRET_KEY = os.environ.get("JWT_SECRET", "your-default-dev-secret")
+SECRET_KEY = os.environ.get("JWT_SECRET")
 ALGORITHM = "HS256"
 
 
