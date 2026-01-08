@@ -14,6 +14,18 @@ const schema = a.schema({
     .returns(a.string()) // This expects the JWT string back from Python
     .handler(a.handler.function(authFunction))
     .authorization((allow) => [allow.guest()]), // Allows login without being logged in
+
+    // ADD SIGNUP HERE
+  signup: a
+    .mutation() // Use mutation for signup
+    .arguments({
+      email: a.string(),
+      password: a.string(),
+      name: a.string(),
+    })
+    .returns(a.string())
+    .handler(a.handler.function(authFunction))
+    .authorization((allow) => [allow.guest()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;

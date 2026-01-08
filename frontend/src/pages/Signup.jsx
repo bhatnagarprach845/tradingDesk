@@ -17,7 +17,7 @@ function Signup({ onSignup }) {
     try {
       if (USE_AMPLIFY) {
         const client = generateClient();
-        await client.queries.signup({ email, password });
+        await client.mutations.signup({ email, password });
       } else {
         await axios.post(`${API_BASE}/auth/signup`, { email, password });
       }
