@@ -11,7 +11,7 @@ export default defineConfig({
     },
     build: {
         // Ensure this matches the 'baseDirectory' in your amplify.yml
-        outDir: 'frontend/dist',
+        outDir: 'dist',
         // Recommended for clean builds on Amplify
         emptyOutDir: true,
     }
