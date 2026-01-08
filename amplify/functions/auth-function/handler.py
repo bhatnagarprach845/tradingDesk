@@ -1,25 +1,46 @@
 import json
+import jwt
+import datetime
+import os
+
+# SECRET_KEY should be set in Amplify Console -> Hosting -> Secrets
+# For local sandbox, use: npx ampx sandbox secret set JWT_SECRET
+SECRET_KEY = os.environ.get("JWT_SECRET", "your-default-dev-secret")
+ALGORITHM = "HS256"
 
 
 def handler(event, context):
-    """
-    Standard Lambda handler for Python.
-    'event' contains the data passed to the function (like email/password).
-    'context' provides runtime information.
-    """
     print("Received event:", json.dumps(event))
 
-    # Example logic to extract arguments if called via Amplify Data (GraphQL)
     arguments = event.get('arguments', {})
     email = arguments.get('email')
     password = arguments.get('password')
 
-    # Your custom auth or business logic here
-    # For now, we'll return a dummy token
-    if email and password:
-        return f"fake-jwt-token-for-{email}"
+    # 1. Validate credentials (your logic here)
+    if not email or not password:
+        raise Exception("Missing email or password")
 
-    return {
-        'statusCode': 400,
-        'body': json.dumps('Missing email or password')
-    }
+    # Example validation: replace this with your DB check
+    if email == "test@example.com" and password == "password123":
+
+        # 2. Create the JWT Payload
+        payload = {
+            "sub": email,  # Subject (unique identifier)
+            "iat": datetime.datetime.utcnow(),  # Issued At
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=24),  # Expiration
+            "role": "user"  # Custom claim
+        }
+
+        # 3. Encode the token
+        try:
+            token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+            # Since your AppSync schema likely expects a string return:
+            return token
+
+        except Exception as e:
+            print(f"Token generation failed: {e}")
+            raise Exception("Internal server error")
+
+    # If auth fails
+    raise Exception("Invalid email or password")
