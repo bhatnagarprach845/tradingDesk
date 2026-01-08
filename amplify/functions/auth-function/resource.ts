@@ -2,8 +2,8 @@ import { defineFunction } from "@aws-amplify/backend";
 
 export const authFunction = defineFunction({
   name: "auth-function",
-  // Amplify handles the bundling, pip install, and zipping automatically
   entry: "./handler.py",
-  runtime: 3.9,
+  // Some versions of the CLI prefer the full string identifier
+  runtime: 'python3.9',
   timeoutSeconds: 20,
 });
