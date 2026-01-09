@@ -12,6 +12,5 @@ const backend = defineBackend({
   authFunction,
 });
 
-backend.addSecret("JWT_SECRET");
 
 export default backend;
