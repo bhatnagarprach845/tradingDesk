@@ -5,4 +5,8 @@ export const authFunction = defineFunction({
   entry: "./handler.ts",
   runtime: 18,
   timeoutSeconds: 20,
+  // 👇 THIS IS REQUIRED
+  environment: {
+    JWT_SECRET: "JWT_SECRET",
+  },
 });

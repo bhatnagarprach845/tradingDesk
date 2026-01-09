@@ -9,3 +9,5 @@ defineBackend({
   auth,
   data,
 });
+
+backend.addSecret("JWT_SECRET");
