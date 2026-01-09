@@ -4,6 +4,6 @@ export const authFunction = defineFunction({
   name: "auth-function",
   entry: "./handler.py",
   // Some versions of the CLI prefer the full string identifier
-  runtime: Runtime.PYTHON_3_9,
+  runtime: 3.9,
   timeoutSeconds: 20,
 });
