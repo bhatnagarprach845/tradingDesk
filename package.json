@@ -28,6 +28,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "aws-amplify": "^6.15.9"
+    "aws-amplify": "^6.15.9",
+    "jsonwebtoken": "^9.0.3"
   }
 }
