@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import jwt
 import os
+from fastapi.security import OAuth2PasswordRequestForm # Add this import
 
 from app.db import SessionLocal
 from app.models import User
@@ -37,12 +38,32 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/token", response_model=Token)
 def login(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if not db_user or not verify_password(user.password, db_user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    payload = {"sub": str(db_user.id), "exp": datetime.utcnow() + timedelta(hours=24)}
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    return {"access_token": token, "token_type": "bearer"}
+    try:
+        print("!!! LOGIN ENDPOINT HIT !!!")  # This must show up
+        db_user = db.query(User).filter(User.email == user.email).first()
+        if not db_user or not verify_password(user.password, db_user.hashed_password):
+            raise HTTPException(status_code=401, detail="Invalid credentials")
+        payload = {"sub": str(db_user.id), "exp": datetime.utcnow() + timedelta(hours=24)}
+        token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+        print(f"DEBUG: Token generated is {token}")
+        # CRITICAL: If token is bytes, decode it to string
+        if isinstance(token, bytes):
+            token = token.decode("utf-8")
+        return {"access_token": str(token), "token_type": "bearer", "debug_msg": "Success"}
+    except Exception as e:
+            # This will send the actual Python error to your browser
+            return {"debug_error": str(e), "type": str(type(e))}
+
+# @router.post("/token", response_model=Token)
+# def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+#     # Use form_data.username instead of user.email
+#     db_user = db.query(User).filter(User.email == form_data.username).first()
+#     if not db_user or not verify_password(form_data.password, db_user.hashed_password):
+#         raise HTTPException(status_code=401, detail="Invalid credentials")
+#
+#     payload = {"sub": str(db_user.id), "exp": datetime.utcnow() + timedelta(hours=24)}
+#     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+#     return {"access_token": token, "token_type": "bearer"}
 
 # OAuth2 for protected routes
 from fastapi.security import OAuth2PasswordBearer

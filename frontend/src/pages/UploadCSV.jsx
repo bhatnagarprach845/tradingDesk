@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { API_BASE } from '../api'; // Adjust path if necessary
 import {
   Box,
   Button,
@@ -84,7 +85,7 @@ export default function Upload() {
     setLoading(true);
     try {
       const res = await axios.post(
-        "http://localhost:8000/upload/upload_csv",
+        `${API_BASE}/upload/upload_csv`,
         formData,
         {
           headers: {

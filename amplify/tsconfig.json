@@ -1,0 +1,6 @@
+{
+  "include": [
+    "amplify/data/resource.ts",
+    "amplify/functions/auth-function/resource.ts"
+  ]
+}

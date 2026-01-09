@@ -1,18 +1,20 @@
 import os
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
+from sqlalchemy import text
 from fastapi.middleware.cors import CORSMiddleware
-from . import auth, upload
+from app.api import auth, upload  # Updated
+from app.db import engine, Base    # Updated
+from app import models             # Updated1
 
-# Use relative imports if files are in the same directory
-from ..db import engine, Base
-from .. import models
-
+print("DATABASE_URL =", os.getenv("DATABASE_URL"))
 # 1. FORCE CREATION AT TOP LEVEL (More reliable for Vercel)
 print("LOG: Application Startup - Initializing Database...")
 try:
-    Base.metadata.create_all(bind=engine)
-    print("LOG: Database tables verified/created.")
+    with engine.begin() as conn:
+        Base.metadata.create_all(bind=conn)
+        #Base.metadata.create_all(bind=engine)
+        print("LOG: Database tables verified/created.")
 except Exception as e:
     print(f"LOG: DATABASE ERROR: {e}")
 
@@ -26,7 +28,7 @@ app.include_router(auth.router)
 app.include_router(upload.router)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,6 +43,8 @@ async def db_check():
         return {"status": "connected", "database": str(engine.url.database)}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
