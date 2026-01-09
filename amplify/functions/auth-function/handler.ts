@@ -1,9 +1,10 @@
 import * as jwt from "jsonwebtoken";
 
-const SECRET_KEY = process.env.JWT_SECRET!;
+const SECRET_KEY = process.env.JWT_SECRET;
 const ALGORITHM = "HS256";
 
 export const handler = async (event: any) => {
+  console.log("JWT_SECRET exists:", !!process.env.JWT_SECRET);
   const { email, password } = event.arguments ?? {};
 
   if (!email || !password) {
