@@ -9,4 +9,10 @@ export const authFunction = defineFunction({
   environment: {
     JWT_SECRET: "JWT_SECRET",
   },
+bundling: {
+    externalModules: [
+      '@aws-sdk/client-dynamodb',
+      '@aws-sdk/lib-dynamodb'
+    ],
+  },
 });
