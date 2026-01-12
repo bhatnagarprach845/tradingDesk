@@ -1,15 +1,35 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, func
-from sqlalchemy.orm import relationship
-from app.db import Base
+from datetime import datetime
+from botocore.exceptions import ClientError
+from app.db import user_table
 
+class User:
+    @staticmethod
+    def get_by_email(email: str):
+        """Fetch a single user by their email (Partition Key)."""
+        try:
+            response = user_table.get_item(Key={'email': email})
+            return response.get('Item')
+        except ClientError as e:
+            print(f"Error fetching user: {e}")
+            return None
 
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
-    is_active = Column(Boolean, default=True)
-    stripe_customer_id = Column(String, nullable=True)
-    stripe_subscription_id = Column(String, nullable=True)
-    stripe_subscription_item_id = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    @staticmethod
+    def create(email: str, hashed_password: str, **kwargs):
+        """Insert a new user item into the table."""
+        item = {
+            'email': email,
+            'hashed_password': hashed_password,
+            'is_active': kwargs.get('is_active', True),
+            'stripe_customer_id': kwargs.get('stripe_customer_id'),
+            'created_at': datetime.utcnow().isoformat(),
+        }
+        try:
+            user_table.put_item(
+                Item=item,
+                ConditionExpression='attribute_not_exists(email)' # Prevent overwriting
+            )
+            return item
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'ConditionalCheckFailedException':
+                raise Exception("User already exists.")
+            raise e

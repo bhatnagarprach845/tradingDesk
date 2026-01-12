@@ -11,7 +11,7 @@ export const USE_AMPLIFY = !isLocalhost;
 
 export const API_BASE = isProd
   ? outputs.data.url
-  : "http://localhost:8000";
+  : "http://localhost:8080";
 
 export async function uploadCsvFile(file) {
     const fd = new FormData();

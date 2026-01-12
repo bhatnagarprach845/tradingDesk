@@ -1,13 +1,11 @@
 # backend/app/api/auth.py
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
+from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime, timedelta, timezone
 import jwt
 import os
-from fastapi.security import OAuth2PasswordRequestForm # Add this import
+from fastapi.security import OAuth2PasswordBearer
 
-from app.db import SessionLocal
-from app.models import User
+from app.models import User  # This is the DynamoDB User class
 from app.utils.security import get_password_hash, verify_password
 from app.schemas import UserCreate, UserOut, Token
 
@@ -16,66 +14,59 @@ ALGORITHM = "HS256"
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# OAuth2 for protected routes
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
+
 
 @router.post("/signup", response_model=UserOut)
-def signup(user: UserCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == user.email).first():
+def signup(user: UserCreate):
+    # 1. Check if user already exists in DynamoDB
+    if User.get_by_email(user.email):
         raise HTTPException(status_code=400, detail="Email already registered")
-    if len(user.password.encode("utf-8")) > 128:
-        raise HTTPException(status_code=400, detail="Password too long")
+
+    # 2. Hash password and save to DynamoDB
     hashed = get_password_hash(user.password)
-    new_user = User(email=user.email, hashed_password=hashed)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-    return {"id": new_user.id, "email": new_user.email}
+    try:
+        new_user = User.create(email=user.email, hashed_password=hashed)
+        # DynamoDB uses strings for IDs; we use email as the unique identifier
+        return {"id": 0, "email": new_user['email']}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/token", response_model=Token)
-def login(user: UserCreate, db: Session = Depends(get_db)):
-    try:
-        print("!!! LOGIN ENDPOINT HIT !!!")  # This must show up
-        db_user = db.query(User).filter(User.email == user.email).first()
-        if not db_user or not verify_password(user.password, db_user.hashed_password):
-            raise HTTPException(status_code=401, detail="Invalid credentials")
-        payload = {"sub": str(db_user.id), "exp": datetime.utcnow() + timedelta(hours=24)}
-        token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-        print(f"DEBUG: Token generated is {token}")
-        # CRITICAL: If token is bytes, decode it to string
-        if isinstance(token, bytes):
-            token = token.decode("utf-8")
-        return {"access_token": str(token), "token_type": "bearer", "debug_msg": "Success"}
-    except Exception as e:
-            # This will send the actual Python error to your browser
-            return {"debug_error": str(e), "type": str(type(e))}
+def login(user: UserCreate):
+    print(f"!!! LOGIN ATTEMPT: {user.email} !!!")
 
-# @router.post("/token", response_model=Token)
-# def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-#     # Use form_data.username instead of user.email
-#     db_user = db.query(User).filter(User.email == form_data.username).first()
-#     if not db_user or not verify_password(form_data.password, db_user.hashed_password):
-#         raise HTTPException(status_code=401, detail="Invalid credentials")
-#
-#     payload = {"sub": str(db_user.id), "exp": datetime.utcnow() + timedelta(hours=24)}
-#     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-#     return {"access_token": token, "token_type": "bearer"}
+    # 1. Fetch user from DynamoDB
+    db_user = User.get_by_email(user.email)
 
-# OAuth2 for protected routes
-from fastapi.security import OAuth2PasswordBearer
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
+    # 2. Verify existence and password
+    if not db_user or not verify_password(user.password, db_user['hashed_password']):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials"
+        )
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+    # 3. Generate JWT
+    expire = datetime.now(timezone.utc) + timedelta(hours=24)
+    payload = {"sub": db_user['email'], "exp": expire}
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+    return {"access_token": token, "token_type": "bearer"}
+
+
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    """Dependency to get the current authenticated user from DynamoDB."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = int(payload.get("sub"))
-        user = db.query(User).get(user_id)
-        if not user:
+        email = payload.get("sub")
+        if email is None:
             raise HTTPException(status_code=401, detail="Invalid token")
+
+        user = User.get_by_email(email)
+        if not user:
+            raise HTTPException(status_code=401, detail="User not found")
         return user
     except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail="Could not validate credentials")

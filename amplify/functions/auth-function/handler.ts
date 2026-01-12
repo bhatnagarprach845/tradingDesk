@@ -1,28 +1,33 @@
+// amplify/functions/auth-function/handler.ts
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
 import * as jwt from "jsonwebtoken";
 
-const SECRET_KEY = process.env.JWT_SECRET;
-const ALGORITHM = "HS256";
+const client = new DynamoDBClient({});
+const docClient = DynamoDBDocumentClient.from(client);
 
 export const handler = async (event: any) => {
-  console.log("JWT_SECRET exists:", !!process.env.JWT_SECRET);
   const { email, password } = event.arguments ?? {};
+  
+  // 1. Fetch user from the database
+  // Note: Table names in Gen 2 usually contain a unique suffix, 
+  // you might pass the table name as an env var in backend.ts
+  const tableName = process.env.USER_TABLE_NAME; 
 
-  if (!email || !password) {
-    throw new Error("Missing email or password");
-  }
+  const response = await docClient.send(new GetCommand({
+    TableName: tableName,
+    Key: { email } 
+  }));
 
-  if (email === "test@example.com" && password === "password123") {
+  const user = response.Item;
+
+  // 2. Validate user and password (bcrypt.compare recommended here)
+  if (user && user.password === password) {
     const now = Math.floor(Date.now() / 1000);
-
     return jwt.sign(
-      {
-        sub: email,
-        iat: now,
-        exp: now + 60 * 60 * 24,
-        role: "user",
-      },
-      SECRET_KEY,
-      { algorithm: ALGORITHM }
+      { sub: email, iat: now, exp: now + 86400 },
+      process.env.JWT_SECRET!,
+      { algorithm: "HS256" }
     );
   }
 

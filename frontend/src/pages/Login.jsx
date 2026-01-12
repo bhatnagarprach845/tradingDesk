@@ -30,6 +30,8 @@ function Login({ onLogin }) {
       } else {
         const res = await axios.post(`${API_BASE}/auth/token`, { email, password });
         jwt = res.data.access_token;
+        localStorage.setItem('token', jwt);
+        console.log("Token saved to local storage!");
       }
 
       if (jwt) onLogin(jwt);

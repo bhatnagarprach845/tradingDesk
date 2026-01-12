@@ -1,50 +1,53 @@
 import os
 from fastapi import FastAPI
-from contextlib import asynccontextmanager
-from sqlalchemy import text
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import auth, upload  # Updated
-from app.db import engine, Base    # Updated
-from app import models             # Updated1
+from app.api import auth, upload
+from app.db import user_table # Import the table resource directly
 
-print("DATABASE_URL =", os.getenv("DATABASE_URL"))
-# 1. FORCE CREATION AT TOP LEVEL (More reliable for Vercel)
-print("LOG: Application Startup - Initializing Database...")
-try:
-    with engine.begin() as conn:
-        Base.metadata.create_all(bind=conn)
-        #Base.metadata.create_all(bind=engine)
-        print("LOG: Database tables verified/created.")
-except Exception as e:
-    print(f"LOG: DATABASE ERROR: {e}")
+# We use a simple FastAPI instance.
+# Lifespan is optional here since DynamoDB doesn't require a connection pool.
+app = FastAPI(title="FIFO SaaS API")
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # We already created tables above, but we keep this for structure
-    yield
-
-app = FastAPI(lifespan=lifespan, title="FIFO SaaS API")
-app.include_router(auth.router)
-app.include_router(upload.router)
+# --- MIDDLEWARE ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# --- ROUTERS ---
+app.include_router(auth.router)
+app.include_router(upload.router)
+
+# --- DIAGNOSTIC ENDPOINTS ---
+
 @app.get("/db-check")
 async def db_check():
+    """
+    Verifies that the Lambda/Server can actually communicate with DynamoDB.
+    """
     try:
-        from sqlalchemy import text
-        with engine.connect() as connection:
-            connection.execute(text("SELECT 1"))
-        return {"status": "connected", "database": str(engine.url.database)}
+        # We check the table status (e.g., 'ACTIVE')
+        status = user_table.table_status
+        return {
+            "status": "connected",
+            "table_name": user_table.name,
+            "table_status": status
+        }
     except Exception as e:
-        return {"status": "error", "message": str(e)}
-
+        return {
+            "status": "error",
+            "message": str(e),
+            "tip": "Check IAM permissions or Local DynamoDB Docker container."
+        }
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    """Basic health check for Vercel/Amplify."""
+    return {"status": "ok", "environment": os.getenv("PROD_ENV", "development")}
