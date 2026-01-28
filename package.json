@@ -1,17 +1,12 @@
 {
   "name": "fifo-saas",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
   "type": "commonjs",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "devDependencies": {
     "@aws-amplify/backend": "^1.20.0",
     "@aws-amplify/backend-cli": "^1.8.2",
-    "aws-cdk": "^2.1000.0",
-    "aws-cdk-lib": "2.236.0",
+    "aws-cdk": "2.177.0",
+    "aws-cdk-lib": "2.177.0",
     "constructs": "^10.4.5",
     "esbuild": "^0.27.2",
     "tsx": "^4.21.0",
@@ -25,7 +20,7 @@
   },
   "overrides": {
     "@aws-sdk/types": "3.734.0",
-    "aws-cdk-lib": "2.236.0",
-    "aws-cdk": "^2.1000.0"
+    "aws-cdk-lib": "2.177.0",
+    "aws-cdk": "2.177.0"
   }
 }
