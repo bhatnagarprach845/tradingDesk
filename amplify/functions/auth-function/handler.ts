@@ -14,7 +14,7 @@ export const handler = async (event: any) => {
   // you might pass the table name as an env var in backend.ts
   const tableName = process.env.USER_TABLE_NAME; 
 
-  const response = await docClient.send(new GetCommand({
+  const response = await git commit -m "fix: pin cdk versions across devDeps and overrides"docClient.send(new GetCommand({
     TableName: tableName,
     Key: { email } 
   }));
