@@ -11,10 +11,10 @@ export const authFunction = defineFunction({
   },
 bundling: {
     externalModules: [
+      'jsonwebtoken',
       '@aws-sdk/client-dynamodb',
       '@aws-sdk/lib-dynamodb',
-      '@aws-sdk/util-dynamodb',
-      'jsonwebtoken' // 👈 ADD THIS HERE
+      '@aws-sdk/util-dynamodb'
     ],
   },
 });
