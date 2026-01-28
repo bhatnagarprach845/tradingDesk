@@ -1,7 +1,7 @@
 // amplify/functions/auth-function/handler.ts
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
-import * as jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
