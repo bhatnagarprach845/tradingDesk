@@ -1,12 +1,13 @@
 // amplify/functions/auth-function/handler.ts
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
-import { env } from "$amplify/env/authFunction";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
+const tableName = process.env.USER_TABLE_NAME;
+const jwtSecret = process.env.JWT_SECRET;
 
 export const handler = async (event: any) => {
   const { email, password, name } = event.arguments ?? {};
