@@ -32,7 +32,8 @@ const schema = a.schema({
     .returns(a.string())
     .handler(a.handler.function(authFunction))
     .authorization((allow) => [allow.guest()]),
-});
+})
+.authorization(allow => [allow.resource(authFunction)]); // Global resource rule
 
 export type Schema = ClientSchema<typeof schema>;
 
