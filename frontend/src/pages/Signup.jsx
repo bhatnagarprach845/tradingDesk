@@ -1,11 +1,13 @@
+// frontend/src/Signup.jsx
 import React, { useState } from 'react';
 import { generateClient } from 'aws-amplify/api';
 import axios from 'axios';
 import { API_BASE, USE_AMPLIFY } from '../api';
 
-function Signup({ onSignup }) {
+function Signup({ onSignupSuccess }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -17,27 +19,47 @@ function Signup({ onSignup }) {
     try {
       if (USE_AMPLIFY) {
         const client = generateClient();
-        await client.mutations.signup({ email, password });
+        // Matching the signup mutation defined in your amplify/data/resource.ts
+        const signupGql = `mutation Signup($email: String!, $password: String!, $name: String!) {
+          signup(email: $email, password: $password, name: $name)
+        }`;
+
+        await client.graphql({
+          query: signupGql,
+          variables: { email, password, name }
+        });
       } else {
-        await axios.post(`${API_BASE}/auth/signup`, { email, password });
+        // Local API Signup
+        await axios.post(`${API_BASE}/auth/signup`, { email, password, name });
       }
-      alert('Signup successful!');
-      onSignup();
+
+      alert("Signup successful! Please login.");
+      onSignupSuccess(); // Switches view back to login
     } catch (err) {
-      console.error(err);
-      setError('Signup failed');
+      console.error("Signup Error:", err);
+      setError(err.errors?.[0]?.message || err.response?.data?.detail || 'Signup failed');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} style={{maxWidth: '400px', margin: '20px auto'}}>
       <h2>Signup ({USE_AMPLIFY ? 'Amplify' : 'Local'})</h2>
       {error && <p style={{ color: 'red' }}>{error}</p>}
-      <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="Email" />
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="Password" />
-      <button type="submit" disabled={loading}>Signup</button>
+
+      <input type="text" placeholder="Full Name" onChange={e => setName(e.target.value)} required
+        style={{width: '100%', padding: '8px', marginBottom: '10px'}} />
+
+      <input type="email" placeholder="Email" onChange={e => setEmail(e.target.value)} required
+        style={{width: '100%', padding: '8px', marginBottom: '10px'}} />
+
+      <input type="password" placeholder="Password" onChange={e => setPassword(e.target.value)} required
+        style={{width: '100%', padding: '8px', marginBottom: '10px'}} />
+
+      <button type="submit" disabled={loading} style={{width: '100%', padding: '10px'}}>
+        {loading ? 'Creating Account...' : 'Sign Up'}
+      </button>
     </form>
   );
 }

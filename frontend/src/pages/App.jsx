@@ -6,6 +6,9 @@ import { useEffect } from 'react';
 
 
 
+// frontend/src/App.jsx (updated snippet)
+// ... same imports ...
+
 function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [view, setView] = useState('login');
@@ -13,7 +16,7 @@ function App() {
   const handleLogin = (jwt) => {
     localStorage.setItem('token', jwt);
     setToken(jwt);
-    setView('upload');
+    // No need to set view here as token presence handles the UI
   };
 
   const handleLogout = () => {
@@ -28,7 +31,9 @@ function App() {
 
       {token ? (
         <>
-          <button onClick={handleLogout}>Logout</button>
+          <div style={{textAlign: 'right'}}>
+            <button onClick={handleLogout}>Logout</button>
+          </div>
           <UploadCSV token={token} />
         </>
       ) : (
@@ -36,11 +41,18 @@ function App() {
           {view === 'login' ? (
             <Login onLogin={handleLogin} />
           ) : (
-            <Signup onSignup={() => setView('login')} />
+            <Signup onSignupSuccess={() => setView('login')} />
           )}
-          <button onClick={() => setView(view === 'login' ? 'signup' : 'login')}>
-            Switch to {view === 'login' ? 'Signup' : 'Login'}
-          </button>
+
+          <div style={{textAlign: 'center', marginTop: '20px'}}>
+            <span>{view === 'login' ? "Don't have an account?" : "Already have an account?"} </span>
+            <button
+              onClick={() => setView(view === 'login' ? 'signup' : 'login')}
+              style={{background: 'none', border: 'none', color: 'blue', textDecoration: 'underline', cursor: 'pointer'}}
+            >
+              {view === 'login' ? 'Sign up' : 'Log in'}
+            </button>
+          </div>
         </>
       )}
     </div>
