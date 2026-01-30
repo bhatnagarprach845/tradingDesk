@@ -17,10 +17,5 @@
     "@aws-sdk/lib-dynamodb": "^3.966.0",
     "aws-amplify": "^6.15.9",
     "jsonwebtoken": "^9.0.3"
-  },
-  "overrides": {
-    "@aws-sdk/types": "3.734.0",
-    "aws-cdk": "^2.1000.0",
-    "aws-cdk-lib": "^2.170.0"
   }
 }
