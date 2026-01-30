@@ -7,33 +7,25 @@ const schema = a.schema({
     password: a.string().required(),
     name: a.string(),
   }).authorization(allow => [
-    allow.guest(),
-    // GRANT THE LAMBDA ACCESS HERE
-    allow.resource(authFunction).to(['read', 'create', 'update'])
+    allow.guest(), // ONLY user-facing rules here
   ]),
 
-  login: a
-    .query()
-    .arguments({
-      email: a.string(),
-      password: a.string(),
-    })
+  login: a.query()
+    .arguments({ email: a.string(), password: a.string() })
     .returns(a.string())
     .handler(a.handler.function(authFunction))
-    .authorization((allow) => [allow.guest()]),
+    .authorization(allow => [allow.guest()]),
 
-  signup: a
-    .mutation()
-    .arguments({
-      email: a.string(),
-      password: a.string(),
-      name: a.string(),
-    })
+  signup: a.mutation()
+    .arguments({ email: a.string(), password: a.string(), name: a.string() })
     .returns(a.string())
     .handler(a.handler.function(authFunction))
-    .authorization((allow) => [allow.guest()]),
+    .authorization(allow => [allow.guest()]),
 })
-.authorization(allow => [allow.resource(authFunction)]); // Global resource rule
+// ✅ MOVE RESOURCE ACCESS HERE (Global level)
+.authorization(allow => [
+  allow.resource(authFunction).to(['query', 'mutate', 'listen'])
+]);
 
 export type Schema = ClientSchema<typeof schema>;
 
