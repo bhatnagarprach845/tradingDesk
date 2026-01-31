@@ -16,6 +16,9 @@ export const handler = async (event: any) => {
   const tableName = process.env.USER_TABLE_NAME;
   const jwtSecret = process.env.JWT_SECRET;
 
+  if (!tableName) {
+      throw new Error(`TABLE_NAME is missing. Found env vars: ${Object.keys(process.env).filter(k => k.includes('TABLE')).join(', ')}`);
+  }
   // --- SIGNUP LOGIC ---
   if (fieldName === "signup") {
     // 1. Check if user already exists
