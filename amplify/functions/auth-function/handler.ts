@@ -11,7 +11,6 @@ const docClient = DynamoDBDocumentClient.from(client);
 export const handler = async (event: any) => {
   const { email, password, name } = event.arguments ?? {};
   const fieldName = event.fieldName; // 'login' or 'signup'
-  const tableName = env.USER_TABLE_NAME;
   const tableName = process.env.USER_TABLE_NAME;
   const jwtSecret = process.env.JWT_SECRET;
 
@@ -46,6 +45,10 @@ export const handler = async (event: any) => {
 
   // --- LOGIN LOGIC ---
   if (fieldName === "login") {
+    if (!jwtSecret) {
+      throw new Error("JWT_SECRET environment variable is not set");
+    }
+
     const response = await docClient.send(new GetCommand({
       TableName: tableName,
       Key: { email }
@@ -57,7 +60,7 @@ export const handler = async (event: any) => {
       const now = Math.floor(Date.now() / 1000);
       return jwt.sign(
         { sub: user.email, name: user.name, iat: now, exp: now + 86400 },
-        env.JWT_SECRET!,
+        jwtSecret,
         { algorithm: "HS256" }
       );
     }
