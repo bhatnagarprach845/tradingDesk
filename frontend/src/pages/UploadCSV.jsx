@@ -85,7 +85,7 @@ export default function Upload() {
     setLoading(true);
     try {
       const res = await axios.post(
-        `${API_BASE}/upload/upload_csv`,
+        `${API_BASE}/upload_csv`,
         formData,
         {
           headers: {
