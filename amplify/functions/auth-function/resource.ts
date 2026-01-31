@@ -9,6 +9,7 @@ export const authFunction = defineFunction({
   environment: {
     JWT_SECRET: "JWT_SECRET",
   },
+resourceGroupName: "data",
 bundling: {
     externalModules: [
       'jsonwebtoken',
