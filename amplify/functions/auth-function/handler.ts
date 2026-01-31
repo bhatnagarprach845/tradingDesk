@@ -17,7 +17,8 @@ export const handler = async (event: any) => {
   const jwtSecret = process.env.JWT_SECRET;
 
   if (!tableName) {
-      throw new Error(`TABLE_NAME is missing. Found env vars: ${Object.keys(process.env).filter(k => k.includes('TABLE')).join(', ')}`);
+    console.error("CRITICAL: USER_TABLE_NAME is missing from environment variables.");
+    throw new Error("Internal Server Error: Database configuration missing.");
   }
   // --- SIGNUP LOGIC ---
   if (fieldName === "signup") {
