@@ -9,6 +9,8 @@ const docClient = DynamoDBDocumentClient.from(client);
 
 
 export const handler = async (event: any) => {
+    // 🔍 PRINT ALL ENV VARS TO FIND THE TABLE NAME
+  console.log("ALL_ENV_VARS:", JSON.stringify(process.env, null, 2));
   const { email, password, name } = event.arguments ?? {};
   const fieldName = event.fieldName; // 'login' or 'signup'
   const tableName = process.env.USER_TABLE_NAME;
