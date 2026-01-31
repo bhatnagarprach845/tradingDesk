@@ -6,7 +6,9 @@ const schema = a.schema({
     email: a.string().required(),
     password: a.string().required(),
     name: a.string(),
-  }).authorization(allow => [
+  })
+.identifier(['email']) // ✅ Explicitly set email as the Primary Key
+.authorization(allow => [
     allow.guest(), // ONLY user-facing rules here
   ]),
 
