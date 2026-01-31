@@ -6,13 +6,14 @@ import bcrypt from "bcryptjs";
 
 const client = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(client);
-const tableName = process.env.USER_TABLE_NAME;
-const jwtSecret = process.env.JWT_SECRET;
+
 
 export const handler = async (event: any) => {
   const { email, password, name } = event.arguments ?? {};
   const fieldName = event.fieldName; // 'login' or 'signup'
   const tableName = env.USER_TABLE_NAME;
+  const tableName = process.env.USER_TABLE_NAME;
+  const jwtSecret = process.env.JWT_SECRET;
 
   // --- SIGNUP LOGIC ---
   if (fieldName === "signup") {
