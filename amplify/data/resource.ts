@@ -5,12 +5,14 @@ import { pythonUpload } from "../functions/python-upload/resource";
 const schema = a.schema({
   User: a.model({
     email: a.string().required(),
-    password: a.string().required(),
+    password: a.string().required(), // Note: Ensure your Lambda hashes this!
     name: a.string(),
   })
-.identifier(['email']) // ✅ Explicitly set email as the Primary Key
-.authorization(allow => [
-    [allow.owner(), allow.group("Admins") // ONLY user-facing rules here
+  .identifier(['email'])
+  .authorization(allow => [
+    // Corrected the brackets here:
+    allow.ownerDefinedIn("email"), // Uses the email field as the owner identity
+    allow.group("Admins")
   ]),
 
   login: a.query()
@@ -26,17 +28,13 @@ const schema = a.schema({
     .authorization(allow => [allow.guest()]),
 
   uploadCsv: a.mutation()
-  .arguments({
-    csvData: a.string(),
-  })
-  .returns(a.string()) // This matches the JSON.dumps output from Python
-  .handler(a.handler.function(pythonUpload))
-  .authorization(allow => [allow.guest()]),
-})
-// ✅ MOVE RESOURCE ACCESS HERE (Global level)
-.authorization(allow => [
-  allow.resource(authFunction).to(['query', 'mutate', 'listen'])
-]);
+    .arguments({
+      csvData: a.string(),
+    })
+    .returns(a.string())
+    .handler(a.handler.function(pythonUpload))
+    .authorization(allow => [allow.guest()]),
+});
 
 export type Schema = ClientSchema<typeof schema>;
 
@@ -44,5 +42,8 @@ export const data = defineData({
   schema,
   authorizationModes: {
     defaultAuthorizationMode: "identityPool",
+    apiKeyConfig: {
+      expiresInDays: 7,
+    },
   },
 });
