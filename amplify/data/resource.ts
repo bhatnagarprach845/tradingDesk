@@ -1,5 +1,6 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { authFunction } from "../functions/auth-function/resource";
+import { pythonUpload } from "../functions/python-upload/resource";
 
 const schema = a.schema({
   User: a.model({
