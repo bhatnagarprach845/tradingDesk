@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generateClient } from 'aws-amplify/api';
+import { generateClient } from 'aws-amplify/data';
 import axios from 'axios';
 import { API_BASE, USE_AMPLIFY } from '../api';
 
@@ -34,7 +34,7 @@ function Login({ onLogin }) {
         console.log("Token saved to local storage!");
       }
 
-      if (jwt) onLogin(jwt);
+      if (jwt) onLogin(jwt, email);
       else setError('Login failed: Invalid credentials');
     } catch (err) {
       console.error("Auth Error:", err);
