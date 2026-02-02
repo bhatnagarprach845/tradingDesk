@@ -87,8 +87,20 @@ export default function Upload() {
     const headers = Object.keys(filteredData[0]);
     const csvContent = [
       headers.join(","),
-      ...filteredData.map(row => headers.map(field => row[field]).join(","))
-    ].join("\n");
+      ...filteredData.map(row => headers.map(field => {
+          const value = row[field];
+
+        // ✅ Format logic:
+        // If the value is a number and the field name suggests it's currency/pnl
+        // We use .toFixed(2) to ensure 2 decimal places
+        if (typeof value === 'number' && !field.toLowerCase().includes('qty')) {
+          return value.toFixed(2);
+        }
+    // Return original value for strings or quantities (qty usually stays as int)
+        return value;
+    }).join(",")
+    )
+  ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
@@ -110,6 +122,13 @@ export default function Upload() {
       headerName: key.replace(/_/g, " ").toUpperCase(),
       flex: 1,
       minWidth: 120,
+      // ✅ Add this valueFormatter for the UI
+      valueFormatter: (params) => {
+        if (typeof params.value === 'number' && !key.toLowerCase().includes('qty')) {
+          return params.value.toFixed(2);
+        }
+        return params.value;
+      }
     }));
 
     const rows = filteredData.map((row, idx) => ({ id: idx, ...row }));
