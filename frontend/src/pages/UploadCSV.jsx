@@ -74,7 +74,7 @@ export default function Upload() {
     }
   };
 
-  const downloadFilteredCSV = (data, filename) => {
+  const downloadFilteredCSV = (data, baseName) => {
     if (!data || data.length === 0) return alert("No data to download.");
     const filteredData = symbolFilter ? data.filter((row) => row.symbol === symbolFilter) : data;
     if (!filteredData.length) return alert("No data matches the selected symbol.");
