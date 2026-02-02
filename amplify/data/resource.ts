@@ -10,7 +10,7 @@ const schema = a.schema({
   })
 .identifier(['email']) // ✅ Explicitly set email as the Primary Key
 .authorization(allow => [
-    [allow.owner(), allow.group("Admins")]), // ONLY user-facing rules here
+    [allow.owner(), allow.group("Admins"), // ONLY user-facing rules here
   ]),
 
   login: a.query()
