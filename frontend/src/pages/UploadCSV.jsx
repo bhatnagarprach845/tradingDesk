@@ -79,6 +79,11 @@ export default function Upload() {
     const filteredData = symbolFilter ? data.filter((row) => row.symbol === symbolFilter) : data;
     if (!filteredData.length) return alert("No data matches the selected symbol.");
 
+    // Create the dynamic filename
+    // Result: "fifo_matched_AAPL.csv" or "fifo_matched_ALL.csv"
+    const displaySymbol = symbolFilter || "ALL";
+    const filename = `fifo_${baseName}_${displaySymbol}.csv`;
+
     const headers = Object.keys(filteredData[0]);
     const csvContent = [
       headers.join(","),
@@ -90,7 +95,9 @@ export default function Upload() {
     const a = document.createElement("a");
     a.href = url;
     a.download = filename;
+    document.body.appendChild(a);
     a.click();
+    a.remove();
     window.URL.revokeObjectURL(url);
   };
 
@@ -149,12 +156,12 @@ export default function Upload() {
 
             <Grid container spacing={2} justifyContent="center" mb={2}>
               <Grid item>
-                <Button variant="contained" color="success" onClick={() => downloadFilteredCSV(result.matches, "matched_lots.csv")}>
+                <Button variant="contained" color="success" onClick={() => downloadFilteredCSV(result.matches, "matched")}>
                   Download Matched
                 </Button>
               </Grid>
               <Grid item>
-                <Button variant="contained" color="warning" onClick={() => downloadFilteredCSV(result.remaining_lots, "remaining_lots.csv")}>
+                <Button variant="contained" color="warning" onClick={() => downloadFilteredCSV(result.remaining_lots, "remaining")}>
                   Download Remaining
                 </Button>
               </Grid>
