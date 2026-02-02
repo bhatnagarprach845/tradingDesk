@@ -7,6 +7,7 @@ const backend = defineBackend({
   auth,
   data,
   authFunction,
+  pythonUpload, // ✅ Add this line
 });
 
 // The IAM policy is now automatically generated because of

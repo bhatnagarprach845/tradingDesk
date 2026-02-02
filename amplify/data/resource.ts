@@ -23,6 +23,14 @@ const schema = a.schema({
     .returns(a.string())
     .handler(a.handler.function(authFunction))
     .authorization(allow => [allow.guest()]),
+
+  uploadCsv: a.mutation()
+  .arguments({
+    csvData: a.string(),
+  })
+  .returns(a.string()) // This matches the JSON.dumps output from Python
+  .handler(a.handler.function(pythonUpload))
+  .authorization(allow => [allow.guest()]),
 })
 // ✅ MOVE RESOURCE ACCESS HERE (Global level)
 .authorization(allow => [
