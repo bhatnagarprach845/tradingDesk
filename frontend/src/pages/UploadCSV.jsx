@@ -19,6 +19,8 @@ import {
 import { generateClient } from 'aws-amplify/data';
 import { DataGrid } from "@mui/x-data-grid";
 
+// Initialize the client
+const client = generateClient();
 
 // ----------------------
 // Custom professional theme
@@ -67,7 +69,6 @@ const theme = createTheme({
 export default function Upload() {
   const [file, setFile] = useState(null);
   const [result, setResult] = useState(null);
-  const [authToken, setAuthToken] = useState(null);
   const [loading, setLoading] = useState(false);
   const [symbolFilter, setSymbolFilter] = useState("");
   const [symbols, setSymbols] = useState([]);
