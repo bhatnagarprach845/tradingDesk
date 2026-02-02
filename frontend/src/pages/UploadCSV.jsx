@@ -15,19 +15,21 @@ import {
   createTheme,
   ThemeProvider,
 } from "@mui/material";
+// 1. Import Amplify Data client helpers
+import { generateClient } from 'aws-amplify/data';
 import { DataGrid } from "@mui/x-data-grid";
-import axios from "axios";
+
 
 // ----------------------
 // Custom professional theme
 // ----------------------
 const theme = createTheme({
   palette: {
-    primary: { main: "#1976d2" },   // blue
-    secondary: { main: "#9c27b0" }, // purple
-    success: { main: "#2e7d32" },   // dark green
-    warning: { main: "#ed6c02" },   // orange
-    info: { main: "#0288d1" },      // teal
+    primary: { main: "#1976d2" },
+    secondary: { main: "#9c27b0" },
+    success: { main: "#2e7d32" },
+    warning: { main: "#ed6c02" },
+    info: { main: "#0288d1" },
   },
   typography: {
     h4: { fontWeight: 700 },
@@ -70,41 +72,40 @@ export default function Upload() {
   const [symbolFilter, setSymbolFilter] = useState("");
   const [symbols, setSymbols] = useState([]);
 
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    if (storedToken) setAuthToken(storedToken);
-  }, []);
+  // Note: We remove authToken state because Amplify handles
+  // authentication automatically via the underlying session.
 
   const upload = async () => {
-    if (!authToken) return alert("Authentication token missing. Please login.");
     if (!file) return alert("Please select a CSV file.");
-
-    const formData = new FormData();
-    formData.append("file", file);
 
     setLoading(true);
     try {
-      const res = await axios.post(
-        `${API_BASE}/upload_csv`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${authToken}`,
-          },
-        }
-      );
-      setResult(res.data);
+      // 2. Read the file content as text (GraphQL doesn't take FormData files)
+      const csvText = await file.text();
 
+      // 3. Call the Python Lambda mutation
+      const { data, errors } = await client.mutations.uploadCsv({
+        csvData: csvText
+      });
+
+      if (errors) {
+        throw new Error(errors[0].message);
+      }
+
+      // 4. Parse the response (Python returns a JSON string)
+      const parsedResult = JSON.parse(data);
+      setResult(parsedResult);
+
+      // Extract symbols for the filter dropdown
       const allSymbols = [
-        ...(res.data.preview?.matches || []),
-        ...(res.data.preview?.remaining_lots || []),
+        ...(parsedResult.matches || []),
+        ...(parsedResult.remaining_lots || []),
       ].map((row) => row.symbol);
       setSymbols([...new Set(allSymbols)]);
       setSymbolFilter("");
     } catch (err) {
-      console.error(err);
-      alert("Upload failed. Please try again.");
+      console.error("Mutation Error:", err);
+      alert("Upload failed: " + (err.message || "Please try again."));
     } finally {
       setLoading(false);
     }
@@ -192,9 +193,18 @@ export default function Upload() {
         </Typography>
 
         <Box display="flex" justifyContent="center" alignItems="center" gap={2} mb={3}>
-          <input type="file" onChange={(e) => setFile(e.target.files[0])} accept=".csv" />
-          <Button variant="contained" color="primary" onClick={upload}>
-            Upload CSV
+          <input
+            type="file"
+            onChange={(e) => setFile(e.target.files[0])}
+            accept=".csv"
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={upload}
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Upload CSV"}
           </Button>
           {loading && <CircularProgress size={24} />}
         </Box>
