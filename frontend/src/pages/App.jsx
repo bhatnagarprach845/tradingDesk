@@ -1,9 +1,14 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect }, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Login from './Login';
+import Signup from './Signup';
+import UploadCSV from './UploadCSV';
+import AdminDashboard from './AdminDashboard';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [view, setView] = useState('upload'); // Default view when logged in
+  // Set default view to 'login' if no token, otherwise 'upload'
+  const [view, setView] = useState(token ? 'upload' : 'login');
 
   // Replace this with your actual admin email
   const ADMIN_EMAIL = "prachi.bhatnagar845@gmail.com";
