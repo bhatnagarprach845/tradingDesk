@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect } from 'react';
 
-function App() {
+export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [view, setView] = useState('upload'); // Default view when logged in
 
