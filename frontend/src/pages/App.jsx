@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect }, { useState } from 'react';
 
 export default function App() {
   const [token, setToken] = useState(localStorage.getItem('token'));
@@ -63,7 +63,7 @@ export default function App() {
           )}
 
           <div style={{ textAlign: 'center', marginTop: '20px' }}>
-            <span>{view === 'login' ? "Don't have an account ?" : "Already have an account?"} </span>
+            <span>{view === 'login' ? "Don't have an account?" : "Already have an account?"} </span>
             <button
               onClick={() => setView(view === 'login' ? 'signup' : 'login')}
               style={{ background: 'none', border: 'none', color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}
