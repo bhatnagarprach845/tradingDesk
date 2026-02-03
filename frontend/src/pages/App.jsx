@@ -10,7 +10,7 @@ export default function App() {
   // Set default view to 'login' if no token, otherwise 'upload'
   const [view, setView] = useState(token ? 'upload' : 'login');
 
-  // Replace this with your actual admin email
+  // Replace this with your actual adminemail
   const ADMIN_EMAIL = "prachi.bhatnagar845@gmail.com";
 
   const handleLogin = (jwt, userEmail) => {
