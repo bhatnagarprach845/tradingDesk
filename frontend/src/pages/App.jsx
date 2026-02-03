@@ -15,7 +15,7 @@ export default function App() {
 
   const handleLogin = (jwt, userEmail) => {
     localStorage.setItem('token', jwt);
-    localStorage.setItem('userEmail', userEmail); //  Store email to check admin status
+    localStorage.setItem('userEmail', userEmail); //Store email to check admin status
     setToken(jwt);
     setView('upload');
   };
