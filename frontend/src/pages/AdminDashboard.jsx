@@ -3,6 +3,7 @@ import { generateClient } from "aws-amplify/data";
 import { Container, Typography, Paper, Box, CircularProgress } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { fetchAuthSession } from 'aws-amplify/auth';
+import { post } from 'aws-amplify/api'; // Import the raw post tool
 
 const client = generateClient();
 
@@ -24,29 +25,44 @@ export default function AdminDashboard() {
       return;
     }
 
-    // ✅ Force the list query to use your manual JWT
-    const { data: items, errors } = await client.models.User.list({
-      authMode: 'userPool', // Tells Amplify to treat this as a User Pool request
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem('token')}`
+    // Define the raw GraphQL query string
+    const listUsersQuery = `
+      query ListUsers {
+        listUsers {
+          items {
+            email
+            name
+            createdAt
+          }
+        }
+      }
+    `;
+
+    // Use the low-level API post to send the request
+    const restOperation = post({
+      apiName: 'data', // This should match your API name in outputs
+      path: '/graphql',
+      options: {
+        body: { query: listUsersQuery },
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       }
     });
 
-    if (errors) {
-      // If you see "Unauthorized" here, the token is sent but the
-      // Admin Group rule in your schema is rejecting it.
-      console.error("GraphQL Errors:", errors);
-      return;
-    }
+    const { body } = await restOperation.response;
+    const result = await body.json();
 
-    console.log("Users fetched successfully:", items);
-    setUsers(items);
-  } catch (err) {
-    // This is where 'NoValidAuthTokens' was being thrown
-    console.error("Fetch Error:", err);
-  } finally {
+    if (result.errors) {
+      console.error("GraphQL Errors:", result.errors);
+    } else {
+      setUsers(result.data.listUsers.items);
+    }
+   } catch (err) {
+       console.error("Fetch Error:", err);
+   } finally {
     setLoading(false);
-  }
+   }
 };
 
   const columns = [
@@ -67,7 +83,7 @@ export default function AdminDashboard() {
               rows={users}
               columns={columns}
               pageSize={10}
-              getRowId={(row) => row.id}
+              getRowId={(row) => row.email}
             />
           </Box>
         )}
