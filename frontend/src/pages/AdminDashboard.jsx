@@ -15,30 +15,40 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchUsers = async () => {
+    setLoading(true);
     try {
-        const session = await fetchAuthSession();
-        const groups = session.tokens?.accessToken?.payload['cognito:groups'];
-        console.log("My Cognito Groups:", groups);
+    const storedToken = localStorage.getItem('token');
 
-        if (!groups || !groups.includes('Admins')) {
-          console.error("User is NOT in the Admins group according to the current session.");
-        }
-        // ✅ ADD THIS: Explicitly use userPool auth mode
-        // Fetches the list of users from your DynamoDB table
-        const { data: items, errors } = await client.models.User.list({
-          authMode: 'userPool'
-        });
-      if (errors) throw new Error(errors[0].message);
-      setUsers(items);
-    } catch (err) {
-      console.error("Error fetching users:", err);
-    } finally {
-      setLoading(false);
+    if (!storedToken) {
+      console.error("No token found in localStorage. Please login.");
+      return;
     }
-  };
+
+    // ✅ Force the list query to use your manual JWT
+    const { data: items, errors } = await client.models.User.list({
+      headers: {
+        Authorization: storedToken // Or `Bearer ${storedToken}` if your Lambda expects that
+      }
+    });
+
+    if (errors) {
+      // If you see "Unauthorized" here, the token is sent but the
+      // Admin Group rule in your schema is rejecting it.
+      console.error("GraphQL Errors:", errors);
+      return;
+    }
+
+    console.log("Users fetched successfully:", items);
+    setUsers(items);
+  } catch (err) {
+    // This is where 'NoValidAuthTokens' was being thrown
+    console.error("Fetch Error:", err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const columns = [
-    { field: "id", headerName: "ID", width: 220 },
     { field: "email", headerName: "Email", width: 250 },
     { field: "name", headerName: "Name", width: 200 },
     { field: "createdAt", headerName: "Signed Up", width: 200 },
