@@ -26,8 +26,9 @@ export default function AdminDashboard() {
 
     // ✅ Force the list query to use your manual JWT
     const { data: items, errors } = await client.models.User.list({
+      authMode: 'userPool', // Tells Amplify to treat this as a User Pool request
       headers: {
-        Authorization: storedToken // Or `Bearer ${storedToken}` if your Lambda expects that
+        Authorization: `Bearer ${localStorage.getItem('token')}`
       }
     });
 
