@@ -40,8 +40,8 @@ export default function AdminDashboard() {
 
     // Use the low-level API post to send the request
     const restOperation = post({
-      apiName: 'SaasData', // This should match your API name in outputs
-      path: '/graphql',
+      apiName: 'AdminAPI', // This should match your API name in outputs
+      path: '',
       options: {
         body: { query: listUsersQuery },
         headers: {
