@@ -6,7 +6,17 @@ import { Amplify } from 'aws-amplify';
 import outputs from '../../amplify_outputs.json';
 
 if (outputs && outputs.data) {
-  Amplify.configure(outputs);
+  Amplify.configure({...outputs,
+  API: {
+    REST: {
+      // You are "naming" your API here so the post function can find it
+      'SaasData': {
+        endpoint: outputs.data.url,
+        region: outputs.data.aws_region
+      }
+    }
+  }
+});
   console.log("Amplify configured successfully");
 } else {
   console.warn("Amplify outputs not found. Running in Local Mode.");
