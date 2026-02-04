@@ -5,19 +5,23 @@ import App from './pages/App.jsx';
 import { Amplify } from 'aws-amplify';
 import outputs from '../../amplify_outputs.json';
 
+// Define the REST configuration using data from the outputs file
+const customConfig = {
+  ...outputs,
+  API: {
+    REST: {
+      'AdminAPI': {
+        endpoint: outputs.data.url,   // Dynamically pulls from your outputs
+        region: outputs.data.aws_region
+      }
+    }
+  }
+};
 if (outputs && outputs.data) {
   Amplify.configure({
-      ...outputs,
-      API: {
-        REST: {
-          // You are "naming" your API here so the post function can find it
-          'AdminAPI': {
-            endpoint: outputs.data.url,
-            region: outputs.data.aws_region
-          }
-        }
-      }
+      customConfig
 });
+  console.log("Configured APIs:", Amplify.getConfig().API.REST);
   console.log("Amplify configured successfully");
 } else {
   console.warn("Amplify outputs not found. Running in Local Mode.");

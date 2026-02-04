@@ -18,46 +18,34 @@ export default function AdminDashboard() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-    const storedToken = localStorage.getItem('token');
+        const storedToken = localStorage.getItem('token');
 
-    if (!storedToken) {
-      console.error("No token found in localStorage. Please login.");
-      return;
-    }
+        if (!storedToken) {
+          console.error("No token found in localStorage. Please login.");
+          return;
+        }
 
-    // Define the raw GraphQL query string
-    const listUsersQuery = `
-      query ListUsers {
-        listUsers {
-          items {
-            email
-            name
-            createdAt
+        const restOperation = post({
+          apiName: 'AdminAPI', // Reference the nickname from main.jsx
+          path: '',           // Empty because the endpoint is the full URL
+          options: {
+            body: {
+              query: `query ListUsers { listUsers { items { email name createdAt } } }`
+            },
+            headers: {
+              Authorization: `Bearer ${storedToken}`
+            }
           }
+        });
+
+        const { body } = await restOperation.response;
+        const result = await body.json();
+
+        if (result.errors) {
+          console.error("GraphQL Errors:", result.errors);
+        } else {
+          setUsers(result.data.listUsers.items);
         }
-      }
-    `;
-
-    // Use the low-level API post to send the request
-    const restOperation = post({
-      apiName: 'AdminAPI', // This should match your API name in outputs
-      path: '',
-      options: {
-        body: { query: listUsersQuery },
-        headers: {
-          Authorization: `Bearer ${storedToken}`
-        }
-      }
-    });
-
-    const { body } = await restOperation.response;
-    const result = await body.json();
-
-    if (result.errors) {
-      console.error("GraphQL Errors:", result.errors);
-    } else {
-      setUsers(result.data.listUsers.items);
-    }
    } catch (err) {
        console.error("Fetch Error:", err);
    } finally {

@@ -74,6 +74,19 @@ export default function Upload() {
     }
   };
 
+  const downloadTemplate = () => {
+    const headers = "side,qty,price,ts,symbol\n";
+    const sampleData = "BUY,10,150.00,2026-01-01T10:00:00Z,AAPL\nSELL,5,155.00,2026-01-02T12:00:00Z,AAPL";
+    const blob = new Blob([headers + sampleData], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('href', url);
+    a.setAttribute('download', 'fifo_template.csv');
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
   const downloadFilteredCSV = (data, baseName) => {
     if (!data || data.length === 0) return alert("No data to download.");
     const filteredData = symbolFilter ? data.filter((row) => row.symbol === symbolFilter) : data;
@@ -157,21 +170,83 @@ export default function Upload() {
   return (
     <ThemeProvider theme={theme}>
       <Container maxWidth="lg" sx={{ paddingY: 5 }}>
-        <Typography variant="h4" align="center" gutterBottom>FIFO Upload</Typography>
+        <Typography variant="h4" align="center" gutterBottom>FIFO SaaS Dashboard</Typography>
 
-        <Box display="flex" justifyContent="center" alignItems="center" gap={2} mb={3}>
-          <input type="file" onChange={(e) => setFile(e.target.files[0])} accept=".csv" />
-          <Button variant="contained" color="primary" onClick={upload} disabled={loading}>
-            {loading ? "Processing..." : "Upload CSV"}
+        {/* --- INSTRUCTIONS SECTION --- */}
+        <Paper variant="outlined" sx={{ p: 3, mb: 4, backgroundColor: '#f8f9fa' }}>
+          <Box display="flex" alignItems="center" gap={1} mb={2}>
+            <InfoOutlined color="info" />
+            <Typography variant="h6">How to Upload</Typography>
+          </Box>
+          <Typography variant="body2" color="textSecondary" mb={2}>
+            To calculate your PnL correctly, please ensure your CSV file follows this exact structure.
+            All headers must be lowercase.
+          </Typography>
+
+          <Table size="small" sx={{ mb: 2, maxWidth: 600, backgroundColor: '#fff' }}>
+            <TableHead>
+              <TableRow>
+                <TableCell><strong>Column</strong></TableCell>
+                <TableCell><strong>Type</strong></TableCell>
+                <TableCell><strong>Description</strong></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              <TableRow><TableCell>side</TableCell><TableCell>Text</TableCell><TableCell>BUY or SELL</TableCell></TableRow>
+              <TableRow><TableCell>qty</TableCell><TableCell>Number</TableCell><TableCell>Quantity of asset</TableCell></TableRow>
+              <TableRow><TableCell>price</TableCell><TableCell>Number</TableCell><TableCell>Price per unit</TableCell></TableRow>
+              <TableRow><TableCell>ts</TableCell><TableCell>ISO Date</TableCell><TableCell>e.g. 2026-02-04T12:00:00Z</TableCell></TableRow>
+            </TableBody>
+          </Table>
+
+          <Button startIcon={<GetApp />} variant="outlined" onClick={downloadTemplate}>
+            Download CSV Template
           </Button>
-          {loading && <CircularProgress size={24} />}
+        </Paper>
+
+        {/* --- UPLOAD SECTION --- */}
+        <Box sx={{ textAlign: 'center', mb: 4 }}>
+          {validationError && (
+            <Alert severity="error" icon={<ErrorOutline />} sx={{ mb: 2, maxWidth: 600, mx: 'auto' }}>
+              <AlertTitle>Validation Error</AlertTitle>
+              {validationError}
+            </Alert>
+          )}
+
+          <Paper sx={{ p: 4, border: '2px dashed #ccc', backgroundColor: '#fafafa' }}>
+            <input
+              accept=".csv"
+              style={{ display: 'none' }}
+              id="raised-button-file"
+              type="file"
+              onChange={handleFileChange}
+            />
+            <label htmlFor="raised-button-file">
+              <Button variant="outlined" component="span" startIcon={<CloudUpload />} sx={{ mb: 2 }}>
+                {file ? file.name : "Select CSV File"}
+              </Button>
+            </label>
+            <Box mt={2}>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={upload}
+                disabled={loading || !file}
+                sx={{ width: 200 }}
+              >
+                {loading ? <CircularProgress size={24} color="inherit" /> : "Run FIFO Engine"}
+              </Button>
+            </Box>
+          </Paper>
         </Box>
 
         {result && (
           <>
-            <Typography variant="h6" color="primary" align="center" gutterBottom>
-              Total Realized PnL: ${result.total_realized_pnl}
-            </Typography>
+            <Paper sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', textAlign: 'center' }}>
+                <Typography variant="h5" color="primary">
+                  Realized PnL: <strong>${result.total_realized_pnl.toFixed(2)}</strong>
+                </Typography>
+            </Paper>
 
             <Grid container spacing={2} justifyContent="center" mb={2}>
               <Grid item>
@@ -186,9 +261,9 @@ export default function Upload() {
               </Grid>
               <Grid item>
                 <FormControl sx={{ minWidth: 180 }}>
-                  <InputLabel>Symbol</InputLabel>
-                  <Select value={symbolFilter} label="Symbol" onChange={(e) => setSymbolFilter(e.target.value)}>
-                    <MenuItem value="">All</MenuItem>
+                  <InputLabel>Filter by Symbol</InputLabel>
+                  <Select value={symbolFilter} label="Filter by Symbol" onChange={(e) => setSymbolFilter(e.target.value)}>
+                    <MenuItem value="">All Assets</MenuItem>
                     {symbols.map((sym) => <MenuItem key={sym} value={sym}>{sym}</MenuItem>)}
                   </Select>
                 </FormControl>
