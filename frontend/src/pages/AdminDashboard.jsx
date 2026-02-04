@@ -16,6 +16,12 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchUsers = async () => {
+    const config = Amplify.getConfig();
+    if (!config.API?.REST?.AdminAPI) {
+        console.error("AdminAPI is not configured in Amplify.");
+        setError("Configuration Error: Please contact support.");
+        return;
+      }
     setLoading(true);
     try {
         const storedToken = localStorage.getItem('token');
