@@ -45,7 +45,7 @@ export default function AdminDashboard() {
       options: {
         body: { query: listUsersQuery },
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${storedToken}`
         }
       }
     });
