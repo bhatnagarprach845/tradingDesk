@@ -8,15 +8,19 @@
     "@types/bcryptjs": "^2.4.6",
     "aws-cdk": "^2.152.0",
     "aws-cdk-lib": "^2.152.0",
+    "bcryptjs": "^2.4.3",
     "constructs": "^10.3.0",
     "esbuild": "^0.24.0",
     "tsx": "4.19.4",
-    "bcryptjs": "^2.4.3",
     "typescript": "~5.3.3"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.734.0",
     "@aws-sdk/lib-dynamodb": "^3.734.0",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.7",
+    "@mui/material": "^7.3.7",
     "aws-amplify": "^6.12.0",
     "jsonwebtoken": "^9.0.2"
   }
