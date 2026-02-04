@@ -25,6 +25,7 @@ function Login({ onLogin }) {
         const res = await client.graphql({
           query: loginGql,
           variables: { email, password }
+          authMode: 'identityPool',
         });
         jwt = res.data.login;
       } else {
