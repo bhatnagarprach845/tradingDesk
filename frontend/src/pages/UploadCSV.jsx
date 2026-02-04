@@ -44,7 +44,27 @@ export default function Upload() {
   const [symbols, setSymbols] = useState([]);
   // ✅ ADD THIS LINE:
   const [validationError, setValidationError] = useState("");
+  const handleFileChange = async (e) => {
+    const selectedFile = e.target.files[0];
+    if (!selectedFile) return;
 
+    // Read the file text to validate headers
+    const text = await selectedFile.text();
+
+    // Check if the required headers exist
+    const firstLine = text.split('\n')[0].toLowerCase();
+    const required = ['side', 'qty', 'price', 'ts'];
+    const missing = required.filter(col => !firstLine.includes(col));
+
+    if (missing.length > 0) {
+      setValidationError(`Invalid Format! Missing required columns: ${missing.join(', ')}`);
+      setFile(null);
+      e.target.value = null; // Reset the input field
+    } else {
+      setValidationError(""); // Clear any old errors
+      setFile(selectedFile);
+    }
+  };
   const upload = async () => {
     if (!file) return alert("Please select a CSV file.");
 
