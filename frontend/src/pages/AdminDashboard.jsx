@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/data";
 import { Container, Typography, Paper, Box, CircularProgress } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
+import { fetchAuthSession } from 'aws-amplify/auth';
 
 const client = generateClient();
 
@@ -15,8 +16,18 @@ export default function AdminDashboard() {
 
   const fetchUsers = async () => {
     try {
-      // Fetches the list of users from your DynamoDB table
-      const { data: items, errors } = await client.models.User.list();
+        const session = await fetchAuthSession();
+        const groups = session.tokens?.accessToken?.payload['cognito:groups'];
+        console.log("My Cognito Groups:", groups);
+
+        if (!groups || !groups.includes('Admins')) {
+          console.error("User is NOT in the Admins group according to the current session.");
+        }
+        // ✅ ADD THIS: Explicitly use userPool auth mode
+        // Fetches the list of users from your DynamoDB table
+        const { data: items, errors } = await client.models.User.list({
+          authMode: 'userPool'
+        });
       if (errors) throw new Error(errors[0].message);
       setUsers(items);
     } catch (err) {
