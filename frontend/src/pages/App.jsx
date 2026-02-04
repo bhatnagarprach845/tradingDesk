@@ -11,7 +11,7 @@ export default function App() {
   const [view, setView] = useState(token ? 'upload' : 'login');
 
   // Replace this with your actual adminemail
-  const ADMIN_EMAIL = "prachi.bhatnagar845@gmail.com";
+  const ADMIN_EMAIL = "bhatnagar.prachi845@gmail.com";
 
   const handleLogin = (jwt, userEmail) => {
     localStorage.setItem('token', jwt);
