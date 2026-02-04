@@ -188,6 +188,17 @@ export default function Upload() {
             sx={{
               "& .matched-row": { backgroundColor: "#d0f0c0" },
               "& .remaining-row": { backgroundColor: "#fff0b3" },
+              "& .MuiDataGrid-columnHeaders": {
+                  backgroundColor: "#1976d2 !important",
+                  color: "white !important",
+                },
+                // Ensure the icons (menu, sort) are also white
+               "& .MuiDataGrid-iconButtonContainer": {
+                  color: "white",
+                },
+                "& .MuiDataGrid-columnHeaderTitle": {
+                  fontWeight: "bold",
+                },
             }}
             getRowClassName={() => type === "matched" ? "matched-row" : "remaining-row"}
           />
