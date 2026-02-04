@@ -42,6 +42,8 @@ export default function Upload() {
   const [loading, setLoading] = useState(false);
   const [symbolFilter, setSymbolFilter] = useState("");
   const [symbols, setSymbols] = useState([]);
+  // ✅ ADD THIS LINE:
+  const [validationError, setValidationError] = useState("");
 
   const upload = async () => {
     if (!file) return alert("Please select a CSV file.");
