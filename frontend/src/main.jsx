@@ -5,25 +5,20 @@ import App from './pages/App.jsx';
 import { Amplify } from 'aws-amplify';
 import outputs from '../../amplify_outputs.json';
 
-Amplify.configure({
-  ...outputs,
-  API: {
-    ...outputs.API, // Preserve existing API settings if any
-    REST: {
-      'AdminAPI': {
-        endpoint: outputs.data.url,
-        region: outputs.data.aws_region
+if (outputs) {
+  Amplify.configure({
+    ...outputs,
+    API: {
+      ...outputs.API,
+      REST: {
+        'AdminAPI': {
+          endpoint: outputs.data.url,
+          region: outputs.data.aws_region
+        }
       }
     }
-  }
-});
-const config = Amplify.getConfig();
-if (config.API && config.API.REST) {
-  console.log("✅ AdminAPI is ready:", config.API.REST.AdminAPI.endpoint);
-} else {
-  console.error("❌ REST configuration failed to load.");
-}
-  console.log("Amplify configured successfully");
+  });
+  console.log("Amplify configured successfully with AdminAPI");
 } else {
   console.warn("Amplify outputs not found. Running in Local Mode.");
 }
