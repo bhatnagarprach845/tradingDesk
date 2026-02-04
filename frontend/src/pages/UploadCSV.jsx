@@ -3,6 +3,12 @@ import {
   Box, Button, Typography, Container, Grid, Paper, CircularProgress,
   FormControl, InputLabel, Select, MenuItem, createTheme, ThemeProvider,
 } from "@mui/material";
+import {
+  CloudUpload,
+  GetApp,
+  InfoOutlined,
+  ErrorOutline
+} from '@mui/icons-material';
 import { DataGrid } from "@mui/x-data-grid";
 // 1. Amplify Data client
 import { generateClient } from 'aws-amplify/data';
