@@ -104,8 +104,8 @@ export default function Upload() {
   };
 
   const downloadTemplate = () => {
-    const headers = "side,qty,price,ts,symbol\n";
-    const sampleData = "BUY,10,150.00,2026-01-01T10:00:00Z,AAPL\nSELL,5,155.00,2026-01-02T12:00:00Z,AAPL";
+    const headers = "symbol,side,qty,price,ts\n";
+    const sampleData = "AAPL,BUY,10,150.00,2026-01-01T10:00:00Z\nAAPL,SELL,5,155.00,2026-01-02T12:00:00Z";
     const blob = new Blob([headers + sampleData], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -197,6 +197,7 @@ export default function Upload() {
                   color: "white",
                 },
                 "& .MuiDataGrid-columnHeaderTitle": {
+                   color: "black",
                   fontWeight: "bold",
                 },
             }}
@@ -232,6 +233,7 @@ export default function Upload() {
               </TableRow>
             </TableHead>
             <TableBody>
+              <TableRow><TableCell>sym</TableCell><TableCell>Text</TableCell><TableCell>Symbol</TableCell></TableRow>
               <TableRow><TableCell>side</TableCell><TableCell>Text</TableCell><TableCell>BUY or SELL</TableCell></TableRow>
               <TableRow><TableCell>qty</TableCell><TableCell>Number</TableCell><TableCell>Quantity of asset</TableCell></TableRow>
               <TableRow><TableCell>price</TableCell><TableCell>Number</TableCell><TableCell>Price per unit</TableCell></TableRow>
