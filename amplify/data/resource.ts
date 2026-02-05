@@ -16,7 +16,7 @@ const schema = a.schema({
     allow.custom(), // ✅ Allows the Lambda Authorizer to grant access
   ]),
 
-  listUsers: a.query()
+  fetchUserList: a.query()
     .returns(a.ref('User').array())
     .handler(a.handler.function(authFunction))
     .authorization(allow => [allow.custom()]), // ✅ Required for your custom Admin check
