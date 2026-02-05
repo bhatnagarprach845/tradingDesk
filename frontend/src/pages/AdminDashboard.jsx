@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/data";
-import { Container, Typography, Paper, Box, CircularProgress } from "@mui/material";
+import { Container, Typography, Paper, Box, CircularProgress, Alert } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { post } from 'aws-amplify/api'; // Import the raw post tool
@@ -18,59 +18,57 @@ export default function AdminDashboard() {
   }, []);
 
   const fetchUsers = async () => {
-    const config = Amplify.getConfig();
-    console.log("Current Config:", config);
-    const endpoint = config.API?.GraphQL?.endpoint; // ✅ Pulls from your outputs automatically
+  const config = Amplify.getConfig();
+  const endpoint = config.API?.GraphQL?.endpoint;
 
-    if (!endpoint) {
-      setError("API Configuration not found. Please refresh.");
-      setLoading(false);
-      return;
+  if (!endpoint) {
+    setError("API Configuration not found.");
+    setLoading(false);
+    return;
+  }
+
+  setLoading(true);
+  setError("");
+
+  try {
+    const token = localStorage.getItem('token');
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` // Ensure 'Bearer ' is present
+      },
+      body: JSON.stringify({
+        query: `query ListUsers {
+          listUsers {
+            items {
+              email
+              name
+              createdAt
+            }
+          }
+        }`
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.status === 401) {
+      throw new Error("Unauthorized: Your token is invalid or you are not an Admin.");
     }
 
-    setLoading(true);
-    setError("");
-    try {
-        const storedToken = localStorage.getItem('token');
-
-        if (!storedToken) {
-          console.error("No token found in localStorage. Please login.");
-          return;
-        }
-
-        const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${storedToken}`
-        },
-        body: JSON.stringify({
-          query: `query ListUsers {
-            listUsers {
-              items {
-                email
-                name
-                createdAt
-              }
-            }
-          }`
-        })
-      });
-
-      const { body } = await restOperation.response;
-      const result = await response.json();
-
-      if (result.errors) {
+    if (result.errors) {
       throw new Error(result.errors[0].message);
-      }
-      setUsers(result.data.listUsers.items);
+    }
 
-   } catch (err) {
-       console.error("Fetch Error:", err);
-       setError(err.message || "Failed to fetch users.");
-   } finally {
+    setUsers(result.data.listUsers.items || []);
+  } catch (err) {
+    console.error("Fetch Error:", err);
+    setError(err.message || "Failed to fetch users.");
+  } finally {
     setLoading(false);
-   }
+  }
 };
 
   if (loading) return (
