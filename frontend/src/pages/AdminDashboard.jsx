@@ -14,19 +14,20 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-
     fetchUsers();
   }, []);
 
   const fetchUsers = async () => {
     const config = Amplify.getConfig();
     console.log("Current Config:", config);
-    if (!config.API?.REST?.AdminAPI) {
-        console.error("AdminAPI is not configured in Amplify.");
-        setError("Configuration Error: Please contact support.");
-        setLoading(false); // ✅ STOP THE SPINNER HERE
-        return;
-      }
+    const endpoint = config.API?.GraphQL?.endpoint; // ✅ Pulls from your outputs automatically
+
+    if (!endpoint) {
+      setError("API Configuration not found. Please refresh.");
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
@@ -37,57 +38,69 @@ export default function AdminDashboard() {
           return;
         }
 
-        const restOperation = post({
-          apiName: 'AdminAPI', // Reference the nickname from main.jsx
-          path: '',           // Empty because the endpoint is the full URL
-          options: {
-            body: {
-              query: `query ListUsers { listUsers { items { email name createdAt } } }`
-            },
-            headers: {
-              Authorization: `Bearer ${storedToken}`
+        const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${storedToken}`
+        },
+        body: JSON.stringify({
+          query: `query ListUsers {
+            listUsers {
+              items {
+                email
+                name
+                createdAt
+              }
             }
-          }
-        });
+          }`
+        })
+      });
 
-        const { body } = await restOperation.response;
-        const result = await body.json();
+      const { body } = await restOperation.response;
+      const result = await response.json();
 
-        if (result.errors) {
-          console.error("GraphQL Errors:", result.errors);
-        } else {
-          setUsers(result.data.listUsers.items);
-        }
+      if (result.errors) {
+      throw new Error(result.errors[0].message);
+      }
+      setUsers(result.data.listUsers.items);
+
    } catch (err) {
        console.error("Fetch Error:", err);
+       setError(err.message || "Failed to fetch users.");
    } finally {
     setLoading(false);
    }
 };
 
-  const columns = [
-    { field: "email", headerName: "Email", width: 250 },
-    { field: "name", headerName: "Name", width: 200 },
-    { field: "createdAt", headerName: "Signed Up", width: 200 },
-  ];
+  if (loading) return (
+    <Box display="flex" justifyContent="center" p={5}><CircularProgress /></Box>
+  );
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 5 }}>
-      <Typography variant="h4" gutterBottom>Admin: User Management</Typography>
-      <Paper sx={{ p: 2 }}>
-        {loading ? (
-          <Box display="flex" justifyContent="center"><CircularProgress /></Box>
-        ) : (
-          <Box sx={{ height: 500, width: '100%' }}>
-            <DataGrid
-              rows={users}
-              columns={columns}
-              pageSize={10}
-              getRowId={(row) => row.email}
-            />
-          </Box>
-        )}
+    <Box p={3}>
+      <Typography variant="h4" gutterBottom>User Management</Typography>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      <Paper>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableCell><strong>Email</strong></TableCell>
+              <TableCell><strong>Name</strong></TableCell>
+              <TableCell><strong>Joined</strong></TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {users.map((user, i) => (
+              <TableRow key={i}>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>{user.name || '—'}</TableCell>
+                <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </Paper>
-    </Container>
+    </Box>
   );
 }
