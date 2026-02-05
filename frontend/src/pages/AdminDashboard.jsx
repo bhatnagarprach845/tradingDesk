@@ -4,6 +4,7 @@ import { Container, Typography, Paper, Box, CircularProgress } from "@mui/materi
 import { DataGrid } from "@mui/x-data-grid";
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { post } from 'aws-amplify/api'; // Import the raw post tool
+import { Amplify } from 'aws-amplify';
 
 const client = generateClient();
 

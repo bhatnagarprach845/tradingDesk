@@ -166,7 +166,9 @@ export default function Upload() {
       minWidth: 120,
       // ✅ Add this valueFormatter for the UI
       valueFormatter: (params) => {
-        if (typeof params.value === 'number' && !key.toLowerCase().includes('qty')) {
+        const isQty = key.toLowerCase().includes('qty');
+        const isTs = key.toLowerCase().includes('ts'); // ✅ Add this check
+        if (typeof params.value === 'number' && !isQty && !isTs) {
           return params.value.toFixed(2);
         }
         return params.value;
