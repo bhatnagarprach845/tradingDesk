@@ -1,19 +1,25 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { authFunction } from "../functions/auth-function/resource";
 import { pythonUpload } from "../functions/python-upload/resource";
+import { authorizerFunction } from "../functions/authorizer/resource"; // ✅ Ensure this import exists
 
 const schema = a.schema({
   User: a.model({
     email: a.string().required(),
-    password: a.string().required(), // Note: Ensure your Lambda hashes this!
+    password: a.string().required(),
     name: a.string(),
+    createdAt: a.datetime(),
   })
   .identifier(['email'])
   .authorization(allow => [
-    // Corrected the brackets here:
-    allow.ownerDefinedIn("email"), // Uses the email field as the owner identity
-    allow.group("Admins")
+    allow.ownerDefinedIn("email"),
+    allow.custom(), // ✅ Allows the Lambda Authorizer to grant access
   ]),
+
+  listUsers: a.query()
+    .returns(a.ref('User').array())
+    .handler(a.handler.function(authFunction))
+    .authorization(allow => [allow.custom()]), // ✅ Required for your custom Admin check
 
   login: a.query()
     .arguments({ email: a.string(), password: a.string() })
@@ -41,7 +47,12 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    defaultAuthorizationMode: "identityPool",
+    // ✅ Change default to 'lambda' to validate your custom HS256 tokens
+    defaultAuthorizationMode: "lambda",
+    lambdaAuthorizationMode: {
+      function: authorizerFunction,
+      timeToLiveInSeconds: 300,
+    },
     apiKeyConfig: {
       expiresInDays: 7,
     },
