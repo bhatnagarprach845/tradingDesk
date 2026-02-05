@@ -11,19 +11,24 @@ const client = generateClient();
 export default function AdminDashboard() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
+
     fetchUsers();
   }, []);
 
   const fetchUsers = async () => {
     const config = Amplify.getConfig();
+    console.log("Current Config:", config);
     if (!config.API?.REST?.AdminAPI) {
         console.error("AdminAPI is not configured in Amplify.");
         setError("Configuration Error: Please contact support.");
+        setLoading(false); // ✅ STOP THE SPINNER HERE
         return;
       }
     setLoading(true);
+    setError("");
     try {
         const storedToken = localStorage.getItem('token');
 
