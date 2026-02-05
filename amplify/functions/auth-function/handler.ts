@@ -65,10 +65,18 @@ export const handler = async (event: any) => {
     if (user && await bcrypt.compare(password, user.password)) {
       const now = Math.floor(Date.now() / 1000);
       return jwt.sign(
-        { sub: user.email, name: user.name, iat: now, exp: now + 86400 },
-        jwtSecret,
-        { algorithm: "HS256" }
-      );
+      {
+        sub: user.email,
+        name: user.name,
+        "cognito:groups": ["Admins"], // Matches your admin requirement
+        iss: "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_9wNrfQNBx",
+        token_use: "access",
+        iat: now,
+        exp: now + 86400 // 24 hours
+      },
+      jwtSecret,
+      { algorithm: "HS256" }
+    );
     }
     throw new Error("Invalid email or password");
   }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/data";
-import { Container, Typography, Paper, Box, CircularProgress, Alert } from "@mui/material";
+import { Container, Typography, Paper, Box, CircularProgress, Alert, Paper,
+  Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { fetchAuthSession } from 'aws-amplify/auth';
 import { post } from 'aws-amplify/api'; // Import the raw post tool
