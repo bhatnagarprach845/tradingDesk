@@ -38,7 +38,7 @@ export default function AdminDashboard() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}` // Ensure 'Bearer ' is present
+        'Authorization': token // Ensure 'Bearer ' is present
       },
       body: JSON.stringify({
         query: `query ListUsers {
