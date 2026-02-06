@@ -1,7 +1,9 @@
 import jwt from "jsonwebtoken";
 
 export const handler = async (event: any) => {
-  const token = event.authorizationToken?.replace('Bearer ', '');
+  const token = event.authorizationToken.startsWith('Bearer ')
+  ? event.authorizationToken.split(' ')[1]
+  : event.authorizationToken;
   const jwtSecret = process.env.JWT_SECRET;
 
   if (!token || !jwtSecret) {
