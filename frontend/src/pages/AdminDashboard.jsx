@@ -42,7 +42,7 @@ export default function AdminDashboard() {
         'Authorization': token // Ensure it has Bearer so your handler's .startsWith logic works
       },
       body: JSON.stringify({
-        query: `query ListUsers {
+        query: `query AdminFetchAllUsers {
           listUsers {
             items {
               email
@@ -64,7 +64,7 @@ export default function AdminDashboard() {
       throw new Error(result.errors[0].message);
     }
 
-    setUsers(result.data.listUsers.items || []);
+    setUsers(result.data.adminFetchAllUsers || []);
   } catch (err) {
     console.error("Fetch Error:", err);
     setError(err.message || "Failed to fetch users.");

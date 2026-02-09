@@ -17,7 +17,7 @@ const schema = a.schema({
     allow.custom(), // Allows the Authorizer to grant access to Admins
   ]),
 
-  listUsers: a.query()
+  adminFetchAllUsers: a.query()
     .returns(a.ref('User').array())
     .handler(a.handler.function(authFunction))
     .authorization(allow => [allow.custom()]), // Validated by your role logic
