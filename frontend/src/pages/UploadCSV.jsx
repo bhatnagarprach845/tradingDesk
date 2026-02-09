@@ -11,7 +11,6 @@ import {
   ErrorOutline
 } from '@mui/icons-material';
 import { DataGrid } from "@mui/x-data-grid";
-// 1. Amplify Data client
 import { generateClient } from 'aws-amplify/data';
 
 const client = generateClient();
@@ -42,16 +41,13 @@ export default function Upload() {
   const [loading, setLoading] = useState(false);
   const [symbolFilter, setSymbolFilter] = useState("");
   const [symbols, setSymbols] = useState([]);
-  // ✅ ADD THIS LINE:
   const [validationError, setValidationError] = useState("");
+
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
-    // Read the file text to validate headers
     const text = await selectedFile.text();
-
-    // Check if the required headers exist
     const firstLine = text.split('\n')[0].toLowerCase();
     const required = ['side', 'qty', 'price', 'ts'];
     const missing = required.filter(col => !firstLine.includes(col));
@@ -59,35 +55,37 @@ export default function Upload() {
     if (missing.length > 0) {
       setValidationError(`Invalid Format! Missing required columns: ${missing.join(', ')}`);
       setFile(null);
-      e.target.value = null; // Reset the input field
+      e.target.value = null;
     } else {
-      setValidationError(""); // Clear any old errors
+      setValidationError("");
       setFile(selectedFile);
     }
   };
+
   const upload = async () => {
     if (!file) return alert("Please select a CSV file.");
 
     setLoading(true);
     try {
       const csvText = await file.text();
+      const token = localStorage.getItem('token'); // ✅ Retrieve your custom JWT
 
-      // Call Python Lambda via AppSync Mutation
-      const { data, errors } = await client.mutations.uploadCsv({
-        csvData: csvText
-      });
+      // ✅ FIX: Explicitly pass authMode and authToken to resolve NoAuthorizationHeader
+      const { data, errors } = await client.mutations.uploadCsv(
+        { csvData: csvText },
+        {
+          authMode: 'lambda',
+          authToken: token
+        }
+      );
 
       if (errors) throw new Error(errors[0].message);
 
-      // Python returns a JSON string, so we parse it
       const parsedResult = JSON.parse(data);
-
-      // Handle potential empty response from Python
       if (parsedResult.error) throw new Error(parsedResult.error);
 
       setResult(parsedResult);
 
-      // Map symbols for the filter dropdown
       const allSymbols = [
         ...(parsedResult.matches || []),
         ...(parsedResult.remaining_lots || []),
@@ -97,7 +95,7 @@ export default function Upload() {
       setSymbolFilter("");
     } catch (err) {
       console.error("Mutation Error:", err);
-      alert("Upload failed: " + (err.message || "Please try again."));
+      alert("Upload failed: " + (err.message || "Please try again. Check if you are logged in."));
     } finally {
       setLoading(false);
     }
@@ -121,8 +119,6 @@ export default function Upload() {
     const filteredData = symbolFilter ? data.filter((row) => row.symbol === symbolFilter) : data;
     if (!filteredData.length) return alert("No data matches the selected symbol.");
 
-    // Create the dynamic filename
-    // Result: "fifo_matched_AAPL.csv" or "fifo_matched_ALL.csv"
     const displaySymbol = symbolFilter || "ALL";
     const filename = `fifo_${baseName}_${displaySymbol}.csv`;
 
@@ -131,16 +127,14 @@ export default function Upload() {
       headers.join(","),
       ...filteredData.map(row => headers.map(field => {
           const value = row[field];
+          const isQty = field.toLowerCase().includes('qty');
+          const isTs = field.toLowerCase().includes('ts'); // ✅ Prevent formatting timestamps
 
-        // ✅ Format logic:
-        // If the value is a number and the field name suggests it's currency/pnl
-        // We use .toFixed(2) to ensure 2 decimal places
-        if (typeof value === 'number' && !field.toLowerCase().includes('qty')) {
-          return value.toFixed(2);
-        }
-    // Return original value for strings or quantities (qty usually stays as int)
-        return value;
-    }).join(",")
+          if (typeof value === 'number' && !isQty && !isTs) {
+            return value.toFixed(2);
+          }
+          return value;
+      }).join(",")
     )
   ].join("\n");
 
@@ -164,10 +158,10 @@ export default function Upload() {
       headerName: key.replace(/_/g, " ").toUpperCase(),
       flex: 1,
       minWidth: 120,
-      // ✅ Add this valueFormatter for the UI
+      // ✅ FIX: valueFormatter logic for UI display
       valueFormatter: (params) => {
         const isQty = key.toLowerCase().includes('qty');
-        const isTs = key.toLowerCase().includes('ts'); // ✅ Add this check
+        const isTs = key.toLowerCase().includes('ts');
         if (typeof params.value === 'number' && !isQty && !isTs) {
           return params.value.toFixed(2);
         }
@@ -191,17 +185,18 @@ export default function Upload() {
               "& .matched-row": { backgroundColor: "#d0f0c0" },
               "& .remaining-row": { backgroundColor: "#fff0b3" },
               "& .MuiDataGrid-columnHeaders": {
-                  backgroundColor: "#1976d2 !important",
-                  color: "white !important",
+                  backgroundColor: "#1976d2",
                 },
-                // Ensure the icons (menu, sort) are also white
-               "& .MuiDataGrid-iconButtonContainer": {
+               "& .MuiDataGrid-columnHeaderTitle": {
                   color: "white",
-                },
-                "& .MuiDataGrid-columnHeaderTitle": {
-                   color: "black",
                   fontWeight: "bold",
                 },
+                "& .MuiDataGrid-iconButtonContainer": {
+                  color: "white",
+                },
+                "& .MuiDataGrid-menuIcon": {
+                  color: "white",
+                }
             }}
             getRowClassName={() => type === "matched" ? "matched-row" : "remaining-row"}
           />
@@ -215,7 +210,6 @@ export default function Upload() {
       <Container maxWidth="lg" sx={{ paddingY: 5 }}>
         <Typography variant="h4" align="center" gutterBottom>FIFO SaaS Dashboard</Typography>
 
-        {/* --- INSTRUCTIONS SECTION --- */}
         <Paper variant="outlined" sx={{ p: 3, mb: 4, backgroundColor: '#f8f9fa' }}>
           <Box display="flex" alignItems="center" gap={1} mb={2}>
             <InfoOutlined color="info" />
@@ -235,10 +229,10 @@ export default function Upload() {
               </TableRow>
             </TableHead>
             <TableBody>
-              <TableRow><TableCell>sym</TableCell><TableCell>Text</TableCell><TableCell>Symbol</TableCell></TableRow>
+              <TableRow><TableCell>symbol</TableCell><TableCell>Text</TableCell><TableCell>Asset Ticker</TableCell></TableRow>
               <TableRow><TableCell>side</TableCell><TableCell>Text</TableCell><TableCell>BUY or SELL</TableCell></TableRow>
-              <TableRow><TableCell>qty</TableCell><TableCell>Number</TableCell><TableCell>Quantity of asset</TableCell></TableRow>
-              <TableRow><TableCell>price</TableCell><TableCell>Number</TableCell><TableCell>Price per unit</TableCell></TableRow>
+              <TableRow><TableCell>qty</TableCell><TableCell>Number</TableCell><TableCell>Quantity</TableCell></TableRow>
+              <TableRow><TableCell>price</TableCell><TableCell>Number</TableCell><TableCell>Cost Basis</TableCell></TableRow>
               <TableRow><TableCell>ts</TableCell><TableCell>ISO Date</TableCell><TableCell>e.g. 2026-02-04T12:00:00Z</TableCell></TableRow>
             </TableBody>
           </Table>
@@ -248,7 +242,6 @@ export default function Upload() {
           </Button>
         </Paper>
 
-        {/* --- UPLOAD SECTION --- */}
         <Box sx={{ textAlign: 'center', mb: 4 }}>
           {validationError && (
             <Alert severity="error" icon={<ErrorOutline />} sx={{ mb: 2, maxWidth: 600, mx: 'auto' }}>
