@@ -1,39 +1,55 @@
 import jwt from "jsonwebtoken";
 
 export const handler = async (event: any) => {
-  // Extract token from header (supports raw token or 'Bearer <token>')
-  const token = event.authorizationToken?.startsWith('Bearer ')
-    ? event.authorizationToken.split(' ')[1]
-    : event.authorizationToken;
+  // 1. Log the incoming event to see exactly what AppSync sends
+  console.log("DEBUG: Full Event:", JSON.stringify(event, null, 2));
+
+  const authHeader = event.authorizationToken || "";
+  console.log("DEBUG: Raw Authorization Header:", authHeader);
+
+  // 2. Extract token and log the result
+  const token = authHeader.startsWith('Bearer ')
+    ? authHeader.substring(7)
+    : authHeader;
+
+  console.log("DEBUG: Extracted Token (first 10 chars):", token.substring(0, 10) + "...");
 
   const jwtSecret = process.env.JWT_SECRET;
-
-  if (!token || !jwtSecret) {
-    console.error("Missing token or JWT_SECRET");
+  if (!jwtSecret) {
+    console.error("DEBUG: CRITICAL ERROR - JWT_SECRET is missing in environment variables.");
     return { isAuthorized: false };
   }
 
   try {
-    // 1. Verify the signature and expiration
+    // 3. Attempt verification and log decoded payload
     const decoded = jwt.verify(token, jwtSecret, { algorithms: ["HS256"] }) as any;
-    const groups = decoded["cognito:groups"] || [];
+    console.log("DEBUG: Decoded JWT Payload:", JSON.stringify(decoded, null, 2));
 
-    // 2. Determine Role
+    const groups = decoded["cognito:groups"] || [];
     const isAdmin = groups.includes("Admins");
     const isGuest = groups.includes("Guests");
 
-    // 3. Authorize if they belong to either allowed group
+    console.log("DEBUG: Role Check - isAdmin:", isAdmin, "| isGuest:", isGuest);
+
+    // 4. Return authorization status
+    const authorized = isAdmin || isGuest;
+    console.log("DEBUG: Final Decision - isAuthorized:", authorized);
+
     return {
-      isAuthorized: isAdmin || isGuest,
+      isAuthorized: authorized,
       resolverContext: {
         userId: decoded.sub,
         email: decoded.email,
-        role: isAdmin ? "Admin" : "Guest", // Useful for resolver logic
+        role: isAdmin ? "Admin" : "Guest",
         groups: JSON.stringify(groups)
       }
     };
-  } catch (err) {
-    console.error("Token verification failed:", err);
+  } catch (err: any) {
+    // 5. Log specific JWT errors (Expired, Invalid Signature, Malformed)
+    console.error("DEBUG: Token verification failed:", err.name, "| Message:", err.message);
+
+    // If you see 'JsonWebTokenError: invalid signature', your JWT_SECRET is different
+    // between the login function and this authorizer.
     return { isAuthorized: false };
   }
 };
