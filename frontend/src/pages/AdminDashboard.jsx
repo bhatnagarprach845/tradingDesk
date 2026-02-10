@@ -31,47 +31,39 @@ export default function AdminDashboard() {
   setLoading(true);
   setError("");
 
-  try {
-    const token = localStorage.getItem('token');
+    try {
+      // 1. Retrieve the token and format it as 'Bearer <token>'
+      const rawToken = localStorage.getItem('token');
+      if (!rawToken) throw new Error("No session found. Please login.");
 
-    const authHeader = token.startsWith('Bearer ') ? token : `Bearer ${token.trim()}`;
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': authHeader // Ensure it has Bearer so your handler's .startsWith logic works
-      },
-      body: JSON.stringify({
-        query: `query AdminFetchAllUsers {
-          listUsers {
-            items {
-              email
-              name
-              createdAt
-            }
-          }
-        }`
-      })
-    });
+      const authHeader = `Bearer ${rawToken.trim()}`;
 
-    const result = await response.json();
+      // 2. Use the typed client instead of raw fetch
+      // This automatically handles endpoint discovery and JSON parsing
+      const { data, errors } = await client.queries.adminFetchAllUsers(
+        {}, // Custom queries require an empty object if no arguments are defined
+        {
+          authMode: 'lambda',
+          authToken: authHeader // Explicitly provide the token for the Lambda Authorizer
+        }
+      );
 
-    if (response.status === 401) {
-      throw new Error("Unauthorized: Your token is invalid or you are not an Admin.");
+      // 3. Handle GraphQL errors (e.g., unauthorized fields)
+      if (errors) {
+        console.error("GraphQL Errors:", errors);
+        throw new Error(errors[0].message);
+      }
+
+      // 4. Update state with the result (returns a flat array for custom queries)
+      setUsers(data || []);
+
+    } catch (err) {
+      console.error("Fetch Error:", err);
+      setError(err.message || "Failed to fetch users.");
+    } finally {
+      setLoading(false);
     }
-
-    if (result.errors) {
-      throw new Error(result.errors[0].message);
-    }
-
-    setUsers(result.data.adminFetchAllUsers || []);
-  } catch (err) {
-    console.error("Fetch Error:", err);
-    setError(err.message || "Failed to fetch users.");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   if (loading) return (
     <Box display="flex" justifyContent="center" p={5}><CircularProgress /></Box>
@@ -80,8 +72,14 @@ export default function AdminDashboard() {
   return (
     <Box p={3}>
       <Typography variant="h4" gutterBottom>User Management</Typography>
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-      <Paper>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+
+      <Paper elevation={3}>
         <Table>
           <TableHead>
             <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
