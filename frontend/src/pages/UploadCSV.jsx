@@ -70,7 +70,7 @@ export default function Upload() {
       const csvText = await file.text();
       const token1 = localStorage.getItem('token'); // ✅ Retrieve your custom JWT
       // ✅ FIX: Manually add the Bearer prefix
-      const token = `Bearer ${token1}`;
+      const token = `Bearer ${token1.trim()}`;
 
       // ✅ FIX: Explicitly pass authMode and authToken to resolve NoAuthorizationHeader
       const { data, errors } = await client.mutations.uploadCsv(

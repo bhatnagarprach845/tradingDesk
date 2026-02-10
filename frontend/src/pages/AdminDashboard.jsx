@@ -34,12 +34,12 @@ export default function AdminDashboard() {
   try {
     const token = localStorage.getItem('token');
 
-    const authHeader = token.startsWith('Bearer ') ? token : `Bearer ${token}`;
+    const authHeader = token.startsWith('Bearer ') ? token : `Bearer ${token.trim()}`;
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': token // Ensure it has Bearer so your handler's .startsWith logic works
+        'Authorization': authHeader // Ensure it has Bearer so your handler's .startsWith logic works
       },
       body: JSON.stringify({
         query: `query AdminFetchAllUsers {
