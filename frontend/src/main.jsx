@@ -3,7 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './pages/App.jsx';
 import { Amplify } from 'aws-amplify';
-import outputs from '../amplify_outputs.json';
+import outputs from '../../amplify_outputs.json';
 
 // Log the start of configuration
 console.log("Initializing Amplify Configuration...");

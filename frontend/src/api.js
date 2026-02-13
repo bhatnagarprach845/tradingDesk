@@ -1,4 +1,4 @@
-import outputs from "../amplify_outputs.json";
+import outputs from "../../amplify_outputs.json";
 
 const isProd = import.meta.env.PROD;
 // 1. Check if the browser URL contains "localhost"
