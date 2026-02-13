@@ -32,7 +32,13 @@ const schema = a.schema({
     .arguments({ email: a.string(), password: a.string(), name: a.string() })
     .returns(a.string())
     .handler(a.handler.function(authFunction))
-    .authorization(allow => [allow.guest()]), // Publicly accessible to allow new users
+    .authorization(allow => [
+      //allow.publicApiKey(), // Allow anyone with an API Key to sign up
+      // OR
+      allow.guest()         // If using Cognito identity pools
+    ])
+    .handler(a.handler.function(authFunction)),
+});
 
   uploadCsv: a.mutation()
     .arguments({ csvData: a.string() })
