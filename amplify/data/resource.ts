@@ -26,17 +26,13 @@ const schema = a.schema({
     .arguments({ email: a.string(), password: a.string() })
     .returns(a.string())
     .handler(a.handler.function(authFunction))
-    .authorization(allow => [allow.guest()]), // Publicly accessible to allow login
+    .authorization(allow => [allow.publicApiKey()]),// Publicly accessible to allow login
 
   signup: a.mutation()
     .arguments({ email: a.string(), password: a.string(), name: a.string() })
     .returns(a.string())
     .handler(a.handler.function(authFunction))
-    .authorization(allow => [
-      //allow.publicApiKey(), // Allow anyone with an API Key to sign up
-      // OR
-      allow.guest()         // If using Cognito identity pools
-    ]),
+    .authorization(allow => [allow.publicApiKey()]),
 
   uploadCsv: a.mutation()
     .arguments({ csvData: a.string() })
@@ -54,6 +50,10 @@ export const data = defineData({
     lambdaAuthorizationMode: {
       function: authorizerFunction,
       timeToLiveInSeconds: 0, // Set to 0 to disable 401 caching for instant updates
+    },
+// ADD THIS SECTION:
+    apiKeyAuthorizationMode: {
+      expiresInDays: 30,
     },
   },
 });
