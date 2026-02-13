@@ -26,7 +26,8 @@ function Signup({ onSignupSuccess }) {
 
         await client.graphql({
           query: signupGql,
-          variables: { email, password, name }
+          variables: { email, password, name },
+          authMode: 'apiKey'
         });
       } else {
         // Local API Signup
