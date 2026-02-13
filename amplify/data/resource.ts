@@ -8,7 +8,7 @@ const schema = a.schema({
     email: a.string().required(),
     password: a.string().required(),
     name: a.string(),
-    role: a.string(), // "Admin" or "Guest"
+    role: a.string(), /// "Admin" or "Guest"
     createdAt: a.datetime(),
   })
   .identifier(['email'])
