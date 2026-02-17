@@ -28,6 +28,8 @@ export const handler = async (event: any) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    // ✅ DEFINE 'now' HERE
+    const now = new Date().toISOString();
 
     await docClient.send(new PutCommand({
       TableName: tableName,
