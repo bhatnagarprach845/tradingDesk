@@ -1,5 +1,5 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
@@ -74,6 +74,13 @@ export const handler = async (event: any) => {
     }
     throw new Error("Invalid email or password");
   }
+if (fieldName === "adminFetchAllUsers") {
+    const response = await docClient.send(new ScanCommand({
+      TableName: tableName,
+    }));
 
+    // Return the items array which matches your User ref array in schema
+    return response.Items ?? [];
+  }
   throw new Error("Unknown action");
 };
