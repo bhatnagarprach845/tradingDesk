@@ -36,7 +36,8 @@ export const handler = async (event: any) => {
         name,
         password: hashedPassword,
         role: "Guest", // Default role for new signups
-        createdAt: new Date().toISOString()
+        createdAt: now,
+        updatedAt: now
       }
     }));
 
