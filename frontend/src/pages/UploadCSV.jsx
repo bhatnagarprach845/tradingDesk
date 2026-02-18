@@ -2,37 +2,25 @@ import React, { useState, useMemo } from "react";
 import {
   Box, Button, Typography, Container, Grid, Paper, CircularProgress,
   FormControl, InputLabel, Select, MenuItem, createTheme, ThemeProvider,
-  Alert, AlertTitle, Table, TableBody, TableCell, TableHead, TableRow
+  Alert, AlertTitle, Table, TableBody, TableCell, TableHead, TableRow,
+  Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle
 } from "@mui/material";
 import {
-  CloudUpload,
-  GetApp,
-  InfoOutlined,
-  ErrorOutline
+  CloudUpload, GetApp, InfoOutlined, ErrorOutline, DeleteForever
 } from '@mui/icons-material';
 import { DataGrid } from "@mui/x-data-grid";
 import { generateClient } from 'aws-amplify/data';
+import { deleteUser } from 'aws-amplify/auth';
 
 const client = generateClient();
 
 const theme = createTheme({
   palette: {
     primary: { main: "#1976d2" },
-    secondary: { main: "#9c27b0" },
+    secondary: { main: "#dc004e" },
     success: { main: "#2e7d32" },
-    warning: { main: "#ed6c02" },
-    info: { main: "#0288d1" },
   },
-  typography: { h4: { fontWeight: 700 }, h6: { fontWeight: 600 } },
-  components: {
-    MuiButton: { styleOverrides: { root: { borderRadius: 8, textTransform: "none", padding: "6px 20px" } } },
-    MuiDataGrid: {
-      styleOverrides: {
-        root: { borderRadius: 8 },
-        columnHeaders: { backgroundColor: "#1976d2", color: "#fff", fontWeight: "bold" },
-      },
-    },
-  },
+  typography: { h4: { fontWeight: 700 } },
 });
 
 export default function Upload() {
@@ -42,13 +30,30 @@ export default function Upload() {
   const [symbolFilter, setSymbolFilter] = useState("");
   const [symbols, setSymbols] = useState([]);
   const [validationError, setValidationError] = useState("");
+  const [openDelete, setOpenDelete] = useState(false);
 
+  // Hardening: Case-insensitive synonyms mapping
   const mappingSynonyms = {
     symbol: ['ticker', 'asset', 'symbol', 'instrument', 'ticker symbol'],
     side: ['side', 'type', 'action', 'buy/sell', 'trans code', 'transaction type'],
     qty: ['qty', 'quantity', 'shares', 'stocks', 'units'],
     price: ['price', 'cost', 'avg price', 'rate', 'execution price'],
-    ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date']
+    ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'activity date']
+  };
+
+// Production Feature: In-App Account Deletion (Google Requirement)
+  const handleDeleteAccount = async () => {
+    try {
+      setLoading(true);
+      await deleteUser();
+      window.location.reload(); // Force redirect to login
+    } catch (err) {
+      console.error("Deletion failed:", err);
+      alert("Failed to delete account. Please contact support.");
+    } finally {
+      setLoading(false);
+      setOpenDelete(false);
+    }
   };
 
   const handleFileChange = async (e) => {
@@ -69,7 +74,6 @@ export default function Upload() {
       // If we can't find a match for a required field, show the error
       setValidationError(`Invalid Format! Missing required columns: ${missing.join(', ')}`);
       setFile(null);
-      e.target.value = null;
     } else {
       // ✅ SUCCESS: The file headers match your synonyms
       setValidationError("");
@@ -306,6 +310,30 @@ export default function Upload() {
     <ThemeProvider theme={theme}>
       <Container maxWidth="lg" sx={{ paddingY: 5 }}>
         <Typography variant="h4" align="center" gutterBottom>FIFO SaaS Dashboard</Typography>
+        <Button
+            color="error"
+            startIcon={<DeleteForever />}
+            onClick={() => setOpenDelete(true)}
+          >
+            Delete Account
+          </Button>
+        </Box>
+
+        {/* Account Deletion Confirmation */}
+        <Dialog open={openDelete} onClose={() => setOpenDelete(false)}>
+          <DialogTitle>Delete Account?</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              This action is permanent. All your trade history and data will be erased.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenDelete(false)}>Cancel</Button>
+            <Button onClick={handleDeleteAccount} color="error" autoFocus>
+              Confirm Deletion
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         <Paper variant="outlined" sx={{ p: 3, mb: 4, backgroundColor: '#f8f9fa' }}>
           <Box display="flex" alignItems="center" gap={1} mb={2}>
