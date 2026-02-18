@@ -48,15 +48,33 @@ export default function Upload() {
     if (!selectedFile) return;
 
     const text = await selectedFile.text();
-    const firstLine = text.split('\n')[0].toLowerCase();
-    const required = ['side', 'qty', 'price', 'ts'];
-    const missing = required.filter(col => !firstLine.includes(col));
+    const rows = text.split('\n').map(row => row.split(','));
+    const headers = rows[0].map(h => h.trim().toLowerCase());
+
+    // Define common synonyms for your required headers
+    const mapping = {
+      symbol: ['ticker', 'asset', 'symbol', 'instrument'],
+      side: ['side', 'type', 'action', 'buy/sell', 'Trans Code'],
+      qty: ['qty', 'quantity', 'amount', 'shares', 'amt', 'stocks'],
+      price: ['price', 'cost', 'avg price', 'rate'],
+      ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date']
+    };
+
+    // Find which index in the user's file matches your requirements
+    const finalMapping = {};
+    Object.keys(mapping).forEach(target => {
+      finalMapping[target] = headers.findIndex(h => mapping[target].includes(h));
+    })
+
+    // Check if any critical columns are still missing
+    const missing = Object.keys(finalMapping).filter(k => finalMapping[k] === -1);
 
     if (missing.length > 0) {
       setValidationError(`Invalid Format! Missing required columns: ${missing.join(', ')}`);
       setFile(null);
       e.target.value = null;
     } else {
+        // ✅ SUCCESS: The file can be "transformed" during the upload step
       setValidationError("");
       setFile(selectedFile);
     }
@@ -76,8 +94,28 @@ export default function Upload() {
     if (!file) return alert("Please select a CSV file.");
 
     setLoading(true);
+      // ... initial setup ...
+    const rows = (await file.text()).split('\n').filter(r => r.trim());
+    const userHeaders = rows[0].split(',').map(h => h.trim().toLowerCase());
+
+    // Find indices again (or store them from handleFileChange)
+    const idx = {
+      symbol: userHeaders.findIndex(h => ['ticker', 'asset', 'symbol', 'instrument'].includes(h)),
+      side: userHeaders.findIndex(h => ['side', 'type', 'action', 'buy/sell', 'Trans Code'].includes(h)),
+      qty: userHeaders.findIndex(h => ['qty', 'quantity', 'amount', 'shares', 'amt', 'stocks'].includes(h)),
+      price: userHeaders.findIndex(h => ['price', 'cost', 'avg price', 'rate'].includes(h)),
+      ts: userHeaders.findIndex(h => ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date'].includes(h)),
+    };
+
+    const finalCsv = ["symbol,side,qty,price,ts", ...transformedRows].join('\n');
+    // Rebuild the CSV into your exact required format
+   /*  const transformedRows = rows.slice(1).map(row => {
+      const cols = row.split(',');
+      return `${cols[idx.symbol]},${cols[idx.side]},${cols[idx.qty]},${cols[idx.price]},${cols[idx.ts]}`;
+    }); */
+
     try {
-      let csvText = await file.text();
+      let csvText = finalCsv;
 
       // ✅ FIX: Remove '$' from price/data before sending to backend
       csvText = csvText.replace(/\$/g, '');
