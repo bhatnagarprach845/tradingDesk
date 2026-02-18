@@ -21,6 +21,7 @@ def handler(event, context):
         if not transactions:
             return json.dumps({"error": "CSV was empty or invalid format"})
 
+        transactions.sort(key=lambda x: x['ts'])  # Mandatory for correct FIFO
         # 4. Run the FIFO matching logic
         result = fifo_match_with_lot_ids(transactions)
 
