@@ -108,15 +108,25 @@ export default function Upload() {
       };
 
       const transformedRows = rows.slice(1).map(row => {
-        const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
-        const cleanCols = cols.map(c => c.replace(/"/g, '').trim());
+        const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        const cleanCols = cols.map(c => c ? c.replace(/"/g, '').trim() : "");
 
-          // Ensure we have data for all required indices before returning
-          if (cleanCols[idx.symbol] && cleanCols[idx.side]) {
-            return `${cleanCols[idx.symbol]},${cleanCols[idx.side]},${cleanCols[idx.qty]},${cleanCols[idx.price]},${cleanCols[idx.ts]}`;
-          }
-          return null;
-        }).filter(r => r !== null);
+        const rawSide = (cleanCols[idx.side] || "").toUpperCase();
+        // ✅ TRADE FILTER: Only allow BUY or SELL. Skips Payments/Fees.
+        let side = "";
+        if (rawSide.includes("BUY")) side = "BUY";
+        else if (rawSide.includes("SELL")) side = "SELL";
+
+        // Ensure valid side and symbol exist before returning
+        if (side && cleanCols[idx.symbol] && cleanCols[idx.symbol] !== "Payment") {
+           const qty = cleanCols[idx.qty] || "0";
+           const price = cleanCols[idx.price] || "0";
+           const ts = cleanCols[idx.ts] || "";
+
+           return `${cleanCols[idx.symbol]},${side},${qty},${price},${ts}`;
+        }
+        return null;
+      }).filter(r => r !== null);
 
       let csvText = ["symbol,side,qty,price,ts", ...transformedRows].join('\n');
       csvText = csvText.replace(/\$/g, '');
