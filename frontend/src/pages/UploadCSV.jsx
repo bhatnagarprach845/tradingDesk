@@ -98,6 +98,7 @@ export default function Upload() {
     const rows = (await file.text()).split('\n').filter(r => r.trim());
     const userHeaders = rows[0].split(',').map(h => h.trim().toLowerCase());
 
+
     // Find indices again (or store them from handleFileChange)
     const idx = {
       symbol: userHeaders.findIndex(h => ['ticker', 'asset', 'symbol', 'instrument'].includes(h)),
@@ -107,7 +108,14 @@ export default function Upload() {
       ts: userHeaders.findIndex(h => ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date'].includes(h)),
     };
 
-    const finalCsv = ["symbol,side,qty,price,ts", ...transformedRows].join('\n');
+    // 1. Define the transformation logic
+    const transformedRows = rows.slice(1).map(row => {
+    const cols = row.split(',').map(c => c.trim());
+    return `${cols[idx.symbol]},${cols[idx.side]},${cols[idx.qty]},${cols[idx.price]},${cols[idx.ts]}`;
+      });
+
+    let csvText = ["symbol,side,qty,price,ts", ...transformedRows].join('\n');
+    csvText = csvText.replace(/\$/g, ''); // Remove currency symbols
     // Rebuild the CSV into your exact required format
    /*  const transformedRows = rows.slice(1).map(row => {
       const cols = row.split(',');
@@ -115,10 +123,6 @@ export default function Upload() {
     }); */
 
     try {
-      let csvText = finalCsv;
-
-      // ✅ FIX: Remove '$' from price/data before sending to backend
-      csvText = csvText.replace(/\$/g, '');
 
       const token1 = localStorage.getItem('token');
       const token = `Bearer ${token1.trim()}`;
