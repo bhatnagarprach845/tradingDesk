@@ -49,7 +49,8 @@ export default function Upload() {
 
     const text = await selectedFile.text();
     const rows = text.split('\n').map(row => row.split(','));
-    const headers = rows[0].map(h => h.trim().toLowerCase());
+    // ✅ FIX: Split by comma AND remove double quotes from the headers
+    const headers = rows[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
 
     // Define common synonyms for your required headers
     const mapping = {
@@ -93,7 +94,8 @@ export default function Upload() {
     setLoading(true);
       // ... initial setup ...
     const rows = (await file.text()).split('\n').filter(r => r.trim());
-    const userHeaders = rows[0].split(',').map(h => h.trim().toLowerCase());
+    // ✅ FIX: Clean quotes from headers
+    const userHeaders = rows[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
 
 
     // Find indices again (or store them from handleFileChange)
@@ -107,7 +109,8 @@ export default function Upload() {
 
     // 1. Define the transformation logic
     const transformedRows = rows.slice(1).map(row => {
-    const cols = row.split(',').map(c => c.trim());
+    // ✅ FIX: Clean quotes from data columns
+    const cols = row.split(',').map(c => c.replace(/"/g, '').trim());
     return `${cols[idx.symbol]},${cols[idx.side]},${cols[idx.qty]},${cols[idx.price]},${cols[idx.ts]}`;
       });
 
