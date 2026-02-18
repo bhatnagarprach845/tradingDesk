@@ -60,21 +60,18 @@ export default function Upload() {
       ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date']
     };
 
-    // Find which index in the user's file matches your requirements
-    const finalMapping = {};
-    Object.keys(mapping).forEach(target => {
-      finalMapping[target] = headers.findIndex(h => mapping[target].includes(h));
-    })
-
-    // Check if any critical columns are still missing
-    const missing = Object.keys(finalMapping).filter(k => finalMapping[k] === -1);
+    // Check if at least one synonym for each required column exists
+    const missing = Object.keys(mapping).filter(target => {
+      return !headers.some(header => mapping[target].includes(header));
+    });
 
     if (missing.length > 0) {
+      // If we can't find a match for a required field, show the error
       setValidationError(`Invalid Format! Missing required columns: ${missing.join(', ')}`);
       setFile(null);
       e.target.value = null;
     } else {
-        // ✅ SUCCESS: The file can be "transformed" during the upload step
+      // ✅ SUCCESS: The file headers match your synonyms
       setValidationError("");
       setFile(selectedFile);
     }
