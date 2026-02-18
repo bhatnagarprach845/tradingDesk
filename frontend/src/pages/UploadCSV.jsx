@@ -141,9 +141,9 @@ export default function Upload() {
     // 2. Get raw keys and create the swapped display headers
     const rawKeys = Object.keys(filteredData[0]);
     const displayHeaders = rawKeys.map(key => {
-      if (key === "buy_price") return "SELL PRICE"; // ✅ Swapped
-      if (key === "sell_price") return "BUY PRICE"; // ✅ Swapped
-      return key.toUpperCase();
+      if (key === "buy_price") return "BUY PRICE"; // Cost Basis
+      if (key === "sell_price") return "SELL PRICE"; // Exit Price
+      return key.replace(/_/g, " ").toUpperCase();
     });
 
     // 3. Build CSV Content
