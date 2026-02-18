@@ -44,11 +44,11 @@ export default function Upload() {
   const [validationError, setValidationError] = useState("");
 
   const mappingSynonyms = {
-    symbol: ['ticker', 'asset', 'symbol', 'Instrument'],
-    side: ['side', 'type', 'action', 'buy/sell', 'Trans Code'],
-    qty: ['qty', 'Quantity', 'shares', 'stocks'],
-    price: ['Price', 'cost', 'avg price', 'rate'],
-    ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'Process Date']
+    symbol: ['ticker', 'asset', 'symbol', 'instrument', 'ticker symbol'],
+    side: ['side', 'type', 'action', 'buy/sell', 'trans code', 'transaction type'],
+    qty: ['qty', 'quantity', 'shares', 'stocks', 'units'],
+    price: ['price', 'cost', 'avg price', 'rate', 'execution price'],
+    ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date']
   };
 
   const handleFileChange = async (e) => {
@@ -105,6 +105,9 @@ export default function Upload() {
         price: userHeaders.findIndex(h => mappingSynonyms.price.includes(h)),
         ts: userHeaders.findIndex(h => mappingSynonyms.ts.includes(h)),
       };
+
+        // ✅ DEBUG: Check if any index is -1 (meaning the header wasn't found)
+      console.log("Detected Column Indices:", idx);
 
       const transformedRows = rows.slice(1).map(row => {
         const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
