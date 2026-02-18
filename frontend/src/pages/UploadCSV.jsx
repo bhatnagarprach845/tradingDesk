@@ -186,8 +186,8 @@ export default function Upload() {
     const columns = Object.keys(filteredData[0]).map((key) => {
       // ✅ FIX: Swap Header Names for Buy/Sell Price
       let displayName = key.replace(/_/g, " ").toUpperCase();
-      if (key === "buy_price") displayName = "SELL PRICE";
-      if (key === "sell_price") displayName = "BUY PRICE";
+      if (key === "buy_price") displayName = "BUY PRICE";   // Cost Basis
+      if (key === "sell_price") displayName = "SELL PRICE"; // Exit Price
 
       return {
         field: key,

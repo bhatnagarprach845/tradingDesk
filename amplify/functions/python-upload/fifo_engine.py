@@ -97,7 +97,7 @@ def fifo_match_with_lot_ids(transactions):
                     "sell_ts": ts,
                     "sell_price": price,           # The price you sold at
                     "qty": match_qty,
-                    "realized_pnl": round(realized, 10)
+                    "realized_pnl": round(realized, 2)
                 })
 
                 total_realized += realized
