@@ -41,6 +41,10 @@ def parse_csv_text(text: str):
             qty = float(clean_row.get("qty", 0))
             price = float(clean_row.get("price", 0))
             ts = clean_row.get("ts", "")
+            # Convert string to date object for PROPER chronological sorting
+            # Use the format that matches your CSV (e.g., '1/13/2026' is '%m/%d/%Y')
+            ts_date = datetime.strptime(ts, '%m/%d/%Y') if '/' in ts else datetime.fromisoformat(
+                ts.replace('Z', ''))
 
             if side in ("BUY", "SELL") and ts:
                 rows.append({
@@ -48,14 +52,15 @@ def parse_csv_text(text: str):
                     "side": side,
                     "qty": qty,
                     "price": price,
-                    "ts": ts
+                    "ts": ts,
+                    "sort_key": ts_date  # New internal key for sorting
                 })
         except (ValueError, KeyError, AttributeError):
             continue
 
     # 2. MANDATORY SORT: Fixes the 'Buy Date after Sell Date' error
     # This ensures the FIFO logic processes the earliest trades first
-    rows.sort(key=lambda x: x['ts'])
+    rows.sort(key=lambda x: x['sort_key'])
 
     return rows
 
