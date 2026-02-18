@@ -89,7 +89,6 @@ export default function Upload() {
 
   const upload = async () => {
     if (!file) return alert("Please select a CSV file.");
-
     setLoading(true);
 
     try {
@@ -119,15 +118,24 @@ export default function Upload() {
 
         // Ensure valid side and symbol exist before returning
         if (side && cleanCols[idx.symbol] && cleanCols[idx.symbol] !== "Payment") {
+           const symbol = cleanCols[idx.symbol];
            const qty = cleanCols[idx.qty] || "0";
            const price = cleanCols[idx.price] || "0";
            const ts = cleanCols[idx.ts] || "";
 
-           return `${cleanCols[idx.symbol]},${side},${qty},${price},${ts}`;
+           // Guard against 'undefined' or empty strings
+           if (qty !== "undefined" && price !== "undefined") {
+             return `${symbol},${side},${qty},${price},${ts}`;
+           }
         }
         return null;
       }).filter(r => r !== null);
 
+      if (transformedRows.length === 0) {
+        throw new Error("No valid BUY or SELL transactions found.");
+      }
+
+      // 3. Finalize payload
       let csvText = ["symbol,side,qty,price,ts", ...transformedRows].join('\n');
       csvText = csvText.replace(/\$/g, '');
 
