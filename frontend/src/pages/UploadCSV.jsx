@@ -131,20 +131,35 @@ export default function Upload() {
 
   const downloadFilteredCSV = (data, baseName) => {
     if (!data || data.length === 0) return alert("No data to download.");
+     // 1. Filter the data based on UI selection
     const filteredData = symbolFilter ? data.filter((row) => row.symbol === symbolFilter) : data;
     if (!filteredData.length) return alert("No data matches the selected symbol.");
 
     const displaySymbol = symbolFilter || "ALL";
     const filename = `fifo_${baseName}_${displaySymbol}.csv`;
 
-    const headers = Object.keys(filteredData[0]);
+    // 2. Get raw keys and create the swapped display headers
+    const rawKeys = Object.keys(filteredData[0]);
+    const displayHeaders = rawKeys.map(key => {
+      if (key === "buy_price") return "SELL PRICE"; // ✅ Swapped
+      if (key === "sell_price") return "BUY PRICE"; // ✅ Swapped
+      return key.toUpperCase();
+    });
+
+    // 3. Build CSV Content
     const csvContent = [
-      headers.join(","),
-      ...filteredData.map(row => headers.map(field => {
-          const value = row[field];
+      displayHeaders.join(","), // Header row
+      ...filteredData.map(row => rawKeys.map(field => {
+          let value = row[field];
+
+          // ✅ Clean: Remove '$' if it somehow ended up in the state
+          if (typeof value === 'string') {
+            value = value.replace(/\$/g, '');
+          }
+
           const isQty = field.toLowerCase().includes('qty');
           const isTs = field.toLowerCase().includes('ts'); // ✅ Prevent formatting timestamps
-
+        // Format numbers to 2 decimals, but ignore Qty and Timestamps
           if (typeof value === 'number' && !isQty && !isTs) {
             return value.toFixed(2);
           }
