@@ -95,8 +95,34 @@ export default function Upload() {
       const rawText = await file.text();
       const rows = rawText.split('\n').filter(r => r.trim());
 
-      // Get cleaned headers for index mapping
-      const userHeaders = rows[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+// ✅ 1. Robust Parser: Handles newlines and commas inside quotes
+      const parseCSV = (text) => {
+        const result = [];
+        let row = [];
+        let col = "";
+        let inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+          const char = text[i];
+          if (char === '"') {
+            if (inQuotes && text[i+1] === '"') { col += '"'; i++; } // Escaped quote
+            else { inQuotes = !inQuotes; }
+          } else if (char === ',' && !inQuotes) {
+            row.push(col); col = "";
+          } else if ((char === '\n' || char === '\r') && !inQuotes) {
+            if (col !== "" || row.length > 0) { row.push(col); result.push(row); }
+            row = []; col = "";
+            if (char === '\r' && text[i+1] === '\n') i++;
+          } else { col += char; }
+        }
+        if (col !== "" || row.length > 0) { row.push(col); result.push(row); }
+        return result;
+      };
+
+      const allRows = parseCSV(rawText);
+      if (allRows.length < 2) throw new Error("CSV is empty or missing headers.");
+
+      // 2. Identify indices from the first row
+      const userHeaders = allRows[0].map(h => h.trim().toLowerCase());
 
       const idx = {
         symbol: userHeaders.findIndex(h => mappingSynonyms.symbol.includes(h)),
@@ -109,37 +135,21 @@ export default function Upload() {
         // ✅ DEBUG: Check if any index is -1 (meaning the header wasn't found)
       console.log("Detected Column Indices:", idx);
 
-      const transformedRows = rows.slice(1).map(row => {
-        const cols = row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-        const cleanCols = cols.map(c => c ? c.replace(/"/g, '').trim() : "");
-
+      const transformedRows = allRows.slice(1).map(cols => {
+        const cleanCols = cols.map(c => c.trim());
         const rawSide = (cleanCols[idx.side] || "").toUpperCase();
-        // ✅ TRADE FILTER: Only allow BUY or SELL. Skips Payments/Fees.
+
         let side = "";
         if (rawSide.includes("BUY")) side = "BUY";
         else if (rawSide.includes("SELL")) side = "SELL";
 
-        // ✅ 3. Debug: Log if we are skipping a row
-          if (!side) {
-              console.log("Skipping non-trade row:", cleanCols[idx.side], cleanCols[idx.symbol]);
-              return null;
-          }
+        if (side && cleanCols[idx.symbol] && cleanCols[idx.symbol] !== "Payment") {
+           return `${cleanCols[idx.symbol]},${side},${cleanCols[idx.qty] || 0},${cleanCols[idx.price] || 0},${cleanCols[idx.ts]}`;
+        }
+        return null;
+      }).filter(r => r !== null);
 
-        // ✅ 4.. Final mapping: ensure no 'undefined' strings
-          const symbol = cleanCols[idx.symbol] || "";
-          const qty = cleanCols[idx.qty] || "0";
-          const price = cleanCols[idx.price] || "0";
-          const ts = cleanCols[idx.ts] || "";
-
-          if (symbol && symbol !== "Payment") {
-             return `${symbol},${side},${qty},${price},${ts}`;
-          }
-          return null;
-        }).filter(r => r !== null);
-
-      if (transformedRows.length === 0) {
-        throw new Error("No valid BUY or SELL transactions found.");
-      }
+      if (transformedRows.length === 0) throw new Error("No valid BUY or SELL transactions found.");
 
       // 3. Finalize payload
       let csvText = ["symbol,side,qty,price,ts", ...transformedRows].join('\n');
