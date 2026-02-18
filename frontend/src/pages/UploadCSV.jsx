@@ -108,10 +108,15 @@ export default function Upload() {
       };
 
       const transformedRows = rows.slice(1).map(row => {
-        // Clean quotes and trim data cells
-        const cols = row.split(',').map(c => c.replace(/"/g, '').trim());
-        return `${cols[idx.symbol]},${cols[idx.side]},${cols[idx.qty]},${cols[idx.price]},${cols[idx.ts]}`;
-      });
+        const cols = row.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g) || [];
+        const cleanCols = cols.map(c => c.replace(/"/g, '').trim());
+
+          // Ensure we have data for all required indices before returning
+          if (cleanCols[idx.symbol] && cleanCols[idx.side]) {
+            return `${cleanCols[idx.symbol]},${cleanCols[idx.side]},${cleanCols[idx.qty]},${cleanCols[idx.price]},${cleanCols[idx.ts]}`;
+          }
+          return null;
+        }).filter(r => r !== null);
 
       let csvText = ["symbol,side,qty,price,ts", ...transformedRows].join('\n');
       csvText = csvText.replace(/\$/g, '');
