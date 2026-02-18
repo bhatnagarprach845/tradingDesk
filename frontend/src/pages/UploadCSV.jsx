@@ -122,7 +122,7 @@ export default function Upload() {
               return null;
           }
 
-        // ✅ 4. Final mapping: ensure no 'undefined' strings
+        // ✅ 4.. Final mapping: ensure no 'undefined' strings
           const symbol = cleanCols[idx.symbol] || "";
           const qty = cleanCols[idx.qty] || "0";
           const price = cleanCols[idx.price] || "0";
