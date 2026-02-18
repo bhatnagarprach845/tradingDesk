@@ -43,27 +43,26 @@ export default function Upload() {
   const [symbols, setSymbols] = useState([]);
   const [validationError, setValidationError] = useState("");
 
+  const mappingSynonyms = {
+    symbol: ['ticker', 'asset', 'symbol', 'instrument'],
+    side: ['side', 'type', 'action', 'buy/sell', 'trans code'],
+    qty: ['qty', 'quantity', 'amount', 'shares', 'amt', 'stocks'],
+    price: ['price', 'cost', 'avg price', 'rate'],
+    ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date', 'activity date']
+  };
+
   const handleFileChange = async (e) => {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
     const text = await selectedFile.text();
-    const rows = text.split('\n').map(row => row.split(','));
-    // ✅ FIX: Split by comma AND remove double quotes from the headers
+    const rows = text.split('\n').filter(r => r.trim());
+
+    // Clean headers: remove quotes, trim, and lowercase
     const headers = rows[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
 
-    // Define common synonyms for your required headers
-    const mapping = {
-      symbol: ['ticker', 'asset', 'symbol', 'instrument'],
-      side: ['side', 'type', 'action', 'buy/sell', 'Trans Code'],
-      qty: ['qty', 'quantity', 'amount', 'shares', 'amt', 'stocks'],
-      price: ['price', 'cost', 'avg price', 'rate'],
-      ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date']
-    };
-
-    // Check if at least one synonym for each required column exists
-    const missing = Object.keys(mapping).filter(target => {
-      return !headers.some(header => mapping[target].includes(header));
+    const missing = Object.keys(mappingSynonyms).filter(target => {
+      return !headers.some(header => mappingSynonyms[target].includes(header));
     });
 
     if (missing.length > 0) {
@@ -92,44 +91,30 @@ export default function Upload() {
     if (!file) return alert("Please select a CSV file.");
 
     setLoading(true);
-      // ... initial setup ...
-    const rawText = await file.text();
-      // Keep rows as strings for now to avoid the double-split error
-    const rows = rawText.split('\n').filter(r => r.trim());
-      // 1. Process headers safely
-    const userHeaders = rows[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
-    const mapping = {
-        symbol: ['ticker', 'asset', 'symbol', 'instrument'],
-        side: ['side', 'type', 'action', 'buy/sell', 'trans code'],
-        qty: ['qty', 'quantity', 'amount', 'shares', 'amt', 'stocks'],
-        price: ['price', 'cost', 'avg price', 'rate'],
-        ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date', 'activity date']
-      };
-
-      const idx = {
-        symbol: userHeaders.findIndex(h => mapping.symbol.includes(h)),
-        side: userHeaders.findIndex(h => mapping.side.includes(h)),
-        qty: userHeaders.findIndex(h => mapping.qty.includes(h)),
-        price: userHeaders.findIndex(h => mapping.price.includes(h)),
-        ts: userHeaders.findIndex(h => mapping.ts.includes(h)),
-      };
-
-    // 1. Define the transformation logic
-    const transformedRows = rows.slice(1).map(row => {
-    // ✅ FIX: Clean quotes from data columns
-    const cols = row.split(',').map(c => c.replace(/"/g, '').trim());
-    return `${cols[idx.symbol]},${cols[idx.side]},${cols[idx.qty]},${cols[idx.price]},${cols[idx.ts]}`;
-      });
-
-    let csvText = ["symbol,side,qty,price,ts", ...transformedRows].join('\n');
-    csvText = csvText.replace(/\$/g, ''); // Remove currency symbols
-    // Rebuild the CSV into your exact required format
-   /*  const transformedRows = rows.slice(1).map(row => {
-      const cols = row.split(',');
-      return `${cols[idx.symbol]},${cols[idx.side]},${cols[idx.qty]},${cols[idx.price]},${cols[idx.ts]}`;
-    }); */
 
     try {
+      const rawText = await file.text();
+      const rows = rawText.split('\n').filter(r => r.trim());
+
+      // Get cleaned headers for index mapping
+      const userHeaders = rows[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+
+      const idx = {
+        symbol: userHeaders.findIndex(h => mappingSynonyms.symbol.includes(h)),
+        side: userHeaders.findIndex(h => mappingSynonyms.side.includes(h)),
+        qty: userHeaders.findIndex(h => mappingSynonyms.qty.includes(h)),
+        price: userHeaders.findIndex(h => mappingSynonyms.price.includes(h)),
+        ts: userHeaders.findIndex(h => mappingSynonyms.ts.includes(h)),
+      };
+
+      const transformedRows = rows.slice(1).map(row => {
+        // Clean quotes and trim data cells
+        const cols = row.split(',').map(c => c.replace(/"/g, '').trim());
+        return `${cols[idx.symbol]},${cols[idx.side]},${cols[idx.qty]},${cols[idx.price]},${cols[idx.ts]}`;
+      });
+
+      let csvText = ["symbol,side,qty,price,ts", ...transformedRows].join('\n');
+      csvText = csvText.replace(/\$/g, '');
 
       const token1 = localStorage.getItem('token');
       const token = `Bearer ${token1?.trim()}`;
@@ -137,10 +122,7 @@ export default function Upload() {
       // ✅ FIX: Explicitly pass authMode and authToken to resolve NoAuthorizationHeader
       const { data, errors } = await client.mutations.uploadCsv(
         { csvData: csvText },
-        {
-          authMode: 'lambda',
-          authToken: token
-        }
+        { authMode: 'lambda', authToken: token }
       );
 
       if (errors) throw new Error(errors[0].message);
@@ -150,12 +132,12 @@ export default function Upload() {
 
       setResult(parsedResult);
 
-      const allSymbols = [
+      const distinctSymbols = [...new Set([
         ...(parsedResult.matches || []),
-        ...(parsedResult.remaining_lots || []),
-      ].map((row) => row.symbol);
+        ...(parsedResult.remaining_lots || [])
+      ].map(r => r.symbol))];
 
-      setSymbols([...new Set([...(parsedResult.matches || []), ...(parsedResult.remaining_lots || [])].map(r => r.symbol))]);
+      setSymbols(distinctSymbols);
       setSymbolFilter("");
     } catch (err) {
       console.error("Mutation Error:", err);
@@ -200,22 +182,13 @@ export default function Upload() {
       displayHeaders.join(","), // Header row
       ...filteredData.map(row => rawKeys.map(field => {
           let value = row[field];
-
-          // ✅ Clean: Remove '$' if it somehow ended up in the state
-          if (typeof value === 'string') {
-            value = value.replace(/\$/g, '');
-          }
-
+          if (typeof value === 'string') value = value.replace(/\$/g, '');
           const isQty = field.toLowerCase().includes('qty');
-          const isTs = field.toLowerCase().includes('ts'); // ✅ Prevent formatting timestamps
-        // Format numbers to 2 decimals, but ignore Qty and Timestamps
-          if (typeof value === 'number' && !isQty && !isTs) {
-            return value.toFixed(2);
-          }
+          const isTs = field.toLowerCase().includes('ts');
+          if (typeof value === 'number' && !isQty && !isTs) return value.toFixed(2);
           return value;
-      }).join(",")
-    )
-  ].join("\n");
+      }).join(","))
+    ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
@@ -301,8 +274,7 @@ export default function Upload() {
             <Typography variant="h6">How to Upload</Typography>
           </Box>
           <Typography variant="body2" color="textSecondary" mb={2}>
-            To calculate your PnL correctly, please ensure your CSV file follows this exact structure.
-            All headers must be lowercase.
+            Ensure your CSV contains columns for symbol, side, quantity, price, and date.
           </Typography>
 
           <Table size="small" sx={{ mb: 2, maxWidth: 600, backgroundColor: '#fff' }}>
