@@ -116,20 +116,23 @@ export default function Upload() {
         if (rawSide.includes("BUY")) side = "BUY";
         else if (rawSide.includes("SELL")) side = "SELL";
 
-        // Ensure valid side and symbol exist before returning
-        if (side && cleanCols[idx.symbol] && cleanCols[idx.symbol] !== "Payment") {
-           const symbol = cleanCols[idx.symbol];
-           const qty = cleanCols[idx.qty] || "0";
-           const price = cleanCols[idx.price] || "0";
-           const ts = cleanCols[idx.ts] || "";
+        // ✅ 3. Debug: Log if we are skipping a row
+          if (!side) {
+              console.log("Skipping non-trade row:", cleanCols[idx.side], cleanCols[idx.symbol]);
+              return null;
+          }
 
-           // Guard against 'undefined' or empty strings
-           if (qty !== "undefined" && price !== "undefined") {
+        // ✅ 4. Final mapping: ensure no 'undefined' strings
+          const symbol = cleanCols[idx.symbol] || "";
+          const qty = cleanCols[idx.qty] || "0";
+          const price = cleanCols[idx.price] || "0";
+          const ts = cleanCols[idx.ts] || "";
+
+          if (symbol && symbol !== "Payment") {
              return `${symbol},${side},${qty},${price},${ts}`;
-           }
-        }
-        return null;
-      }).filter(r => r !== null);
+          }
+          return null;
+        }).filter(r => r !== null);
 
       if (transformedRows.length === 0) {
         throw new Error("No valid BUY or SELL transactions found.");
