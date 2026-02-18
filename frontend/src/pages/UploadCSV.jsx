@@ -44,11 +44,11 @@ export default function Upload() {
   const [validationError, setValidationError] = useState("");
 
   const mappingSynonyms = {
-    symbol: ['ticker', 'asset', 'symbol', 'instrument'],
-    side: ['side', 'type', 'action', 'buy/sell', 'trans code'],
-    qty: ['qty', 'quantity', 'amount', 'shares', 'amt', 'stocks'],
-    price: ['price', 'cost', 'avg price', 'rate'],
-    ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date', 'activity date']
+    symbol: ['ticker', 'asset', 'symbol', 'Instrument'],
+    side: ['side', 'type', 'action', 'buy/sell', 'Trans Code'],
+    qty: ['qty', 'Quantity', 'shares', 'stocks'],
+    price: ['Price', 'cost', 'avg price', 'rate'],
+    ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'Process Date']
   };
 
   const handleFileChange = async (e) => {
