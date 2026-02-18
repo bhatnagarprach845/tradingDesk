@@ -93,19 +93,26 @@ export default function Upload() {
 
     setLoading(true);
       // ... initial setup ...
-    const rows = (await file.text()).split('\n').filter(r => r.trim());
-    // ✅ FIX: Clean quotes from headers
+    const rawText = await file.text();
+      // Keep rows as strings for now to avoid the double-split error
+    const rows = rawText.split('\n').filter(r => r.trim());
+      // 1. Process headers safely
     const userHeaders = rows[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+    const mapping = {
+        symbol: ['ticker', 'asset', 'symbol', 'instrument'],
+        side: ['side', 'type', 'action', 'buy/sell', 'trans code'],
+        qty: ['qty', 'quantity', 'amount', 'shares', 'amt', 'stocks'],
+        price: ['price', 'cost', 'avg price', 'rate'],
+        ts: ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date', 'activity date']
+      };
 
-
-    // Find indices again (or store them from handleFileChange)
-    const idx = {
-      symbol: userHeaders.findIndex(h => ['ticker', 'asset', 'symbol', 'instrument'].includes(h)),
-      side: userHeaders.findIndex(h => ['side', 'type', 'action', 'buy/sell', 'Trans Code'].includes(h)),
-      qty: userHeaders.findIndex(h => ['qty', 'quantity', 'amount', 'shares', 'amt', 'stocks'].includes(h)),
-      price: userHeaders.findIndex(h => ['price', 'cost', 'avg price', 'rate'].includes(h)),
-      ts: userHeaders.findIndex(h => ['ts', 'timestamp', 'date', 'time', 'transaction date', 'process date'].includes(h)),
-    };
+      const idx = {
+        symbol: userHeaders.findIndex(h => mapping.symbol.includes(h)),
+        side: userHeaders.findIndex(h => mapping.side.includes(h)),
+        qty: userHeaders.findIndex(h => mapping.qty.includes(h)),
+        price: userHeaders.findIndex(h => mapping.price.includes(h)),
+        ts: userHeaders.findIndex(h => mapping.ts.includes(h)),
+      };
 
     // 1. Define the transformation logic
     const transformedRows = rows.slice(1).map(row => {
@@ -125,7 +132,7 @@ export default function Upload() {
     try {
 
       const token1 = localStorage.getItem('token');
-      const token = `Bearer ${token1.trim()}`;
+      const token = `Bearer ${token1?.trim()}`;
 
       // ✅ FIX: Explicitly pass authMode and authToken to resolve NoAuthorizationHeader
       const { data, errors } = await client.mutations.uploadCsv(
@@ -148,7 +155,7 @@ export default function Upload() {
         ...(parsedResult.remaining_lots || []),
       ].map((row) => row.symbol);
 
-      setSymbols([...new Set(allSymbols)]);
+      setSymbols([...new Set([...(parsedResult.matches || []), ...(parsedResult.remaining_lots || [])].map(r => r.symbol))]);
       setSymbolFilter("");
     } catch (err) {
       console.error("Mutation Error:", err);
