@@ -62,14 +62,27 @@ export default function Upload() {
     }
   };
 
+ // ✅ NEW: Memoized calculation for PnL based on filter
+  const filteredPnL = useMemo(() => {
+    if (!result || !result.matches) return 0;
+    const dataToSum = symbolFilter
+      ? result.matches.filter(m => m.symbol === symbolFilter)
+      : result.matches;
+
+    return dataToSum.reduce((sum, row) => sum + (row.realized_pnl || 0), 0);
+  }, [result, symbolFilter]);
+
   const upload = async () => {
     if (!file) return alert("Please select a CSV file.");
 
     setLoading(true);
     try {
-      const csvText = await file.text();
-      const token1 = localStorage.getItem('token'); // ✅ Retrieve your custom JWT
-      // ✅ FIX: Manually add the Bearer prefix
+      let csvText = await file.text();
+
+      // ✅ FIX: Remove '$' from price/data before sending to backend
+      csvText = csvText.replace(/\$/g, '');
+
+      const token1 = localStorage.getItem('token');
       const token = `Bearer ${token1.trim()}`;
 
       // ✅ FIX: Explicitly pass authMode and authToken to resolve NoAuthorizationHeader
@@ -155,21 +168,27 @@ export default function Upload() {
     const filteredData = symbolFilter ? data.filter((row) => row.symbol === symbolFilter) : data;
     if (!filteredData || filteredData.length === 0) return null;
 
-    const columns = Object.keys(filteredData[0]).map((key) => ({
-      field: key,
-      headerName: key.replace(/_/g, " ").toUpperCase(),
-      flex: 1,
-      minWidth: 120,
-      // ✅ FIX: valueFormatter logic for UI display
-      valueFormatter: (params) => {
-        const isQty = key.toLowerCase().includes('qty');
-        const isTs = key.toLowerCase().includes('ts');
-        if (typeof params.value === 'number' && !isQty && !isTs) {
-          return params.value.toFixed(2);
+    const columns = Object.keys(filteredData[0]).map((key) => {
+      // ✅ FIX: Swap Header Names for Buy/Sell Price
+      let displayName = key.replace(/_/g, " ").toUpperCase();
+      if (key === "buy_price") displayName = "SELL PRICE";
+      if (key === "sell_price") displayName = "BUY PRICE";
+
+      return {
+        field: key,
+        headerName: displayName,
+        flex: 1,
+        minWidth: 120,
+        valueFormatter: (params) => {
+          const isQty = key.toLowerCase().includes('qty');
+          const isTs = key.toLowerCase().includes('ts');
+          if (typeof params.value === 'number' && !isQty && !isTs) {
+            return params.value.toFixed(2);
+          }
+          return params.value;
         }
-        return params.value;
-      }
-    }));
+      };
+    });
 
     const rows = filteredData.map((row, idx) => ({ id: idx, ...row }));
 
@@ -190,7 +209,7 @@ export default function Upload() {
                   backgroundColor: "#1976d2",
                 },
                "& .MuiDataGrid-columnHeaderTitle": {
-                  color: "white",
+                  color: "black",
                   fontWeight: "bold",
                 },
                 "& .MuiDataGrid-iconButtonContainer": {
@@ -283,7 +302,9 @@ export default function Upload() {
           <>
             <Paper sx={{ p: 2, mb: 3, backgroundColor: '#e3f2fd', textAlign: 'center' }}>
                 <Typography variant="h5" color="primary">
-                  Realized PnL: <strong>${result.total_realized_pnl.toFixed(2)}</strong>
+                  {/* ✅ FIX: Display filtered PnL */}
+                  {symbolFilter ? `${symbolFilter} ` : "Total "}
+                  Realized PnL: <strong>${filteredPnL.toFixed(2)}</strong>
                 </Typography>
             </Paper>
 
