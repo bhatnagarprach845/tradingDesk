@@ -14,36 +14,54 @@ function Login({ onLogin }) {
     setLoading(true);
     setError('');
 
+    // ✅ Clean the inputs to prevent hidden space errors
+    const cleanEmail = email.trim();
+    const cleanPassword = password; // Passwords shouldn't be trimmed as spaces might be intentional
+
     try {
       let jwt = null;
 
       if (USE_AMPLIFY) {
-        // ✅ CORRECT WAY: Use Amplify Auth to sign in
-        // This populates the internal library state for deleteUser()
+        // ✅ STEP 1: Official Amplify Sign In
         const { isSignedIn, nextStep } = await signIn({
-          username: email,
-          password: password,
+          username: cleanEmail,
+          password: cleanPassword,
         });
 
+        // Handle cases where user might need to confirm email or change password
+        if (nextStep.signInStep === 'CONFIRM_SIGN_UP') {
+           setError("Please confirm your email before logging in.");
+           return;
+        }
+
         if (isSignedIn) {
-          // Now that Amplify is logged in, we grab the token for your Lambda logic
+          // ✅ STEP 2: Retrieve session and token
           const session = await fetchAuthSession();
           jwt = session.tokens.accessToken.toString();
           localStorage.setItem('token', jwt);
+          onLogin(jwt, cleanEmail);
         }
       } else {
-        const res = await axios.post(`${API_BASE}/auth/token`, { email, password });
+        // Local Backend Fallback
+        const res = await axios.post(`${API_BASE}/auth/token`, {
+            email: cleanEmail,
+            password: cleanPassword
+        });
         jwt = res.data.access_token;
         localStorage.setItem('token', jwt);
-        console.log("Token saved to local storage!");
+        onLogin(jwt, cleanEmail);
       }
-
-      if (jwt) onLogin(jwt, email);
-      else setError('Login failed: Invalid credentials');
     } catch (err) {
-      console.error("Auth Error:", err);
-      // Handle Cognito specific errors (like UserNotFoundException)
-      setError(err.message || 'Server error occurred');
+      console.error("Cognito Auth Error:", err);
+
+      // ✅ Friendly Error Mapping
+      if (err.name === 'NotAuthorizedException') {
+        setError("Invalid email or password. Please try again.");
+      } else if (err.name === 'UserNotFoundException') {
+        setError("No account found with this email.");
+      } else {
+        setError(err.message || 'An unexpected error occurred.');
+      }
     } finally {
       setLoading(false);
     }
