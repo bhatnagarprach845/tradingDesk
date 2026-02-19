@@ -67,8 +67,9 @@ export default function Upload() {
 
         // 3. Cleanup local state and redirect
         localStorage.clear(); */
+        localStorage.clear();
         alert("Account successfully deleted.");
-        window.location.replace("/login");
+        window.location.href = "/login";
     } catch (err) {
       console.error("Deletion failed:", err);
       // Check if it's an Auth error
