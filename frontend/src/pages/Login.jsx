@@ -14,38 +14,37 @@ function Login({ onLogin }) {
     setLoading(true);
     setError('');
 
-    // ✅ Clean the inputs to prevent hidden space errors
+    // ✅ CLEANUP: Remove accidental spaces from email
     const cleanEmail = email.trim();
-    const cleanPassword = password; // Passwords shouldn't be trimmed as spaces might be intentional
+    const cleanPassword = password; // Do not trim password as spaces can be part of it
 
     try {
       let jwt = null;
 
       if (USE_AMPLIFY) {
-        // ✅ STEP 1: Official Amplify Sign In
+        // ✅ Official Amplify Sign-In
         const { isSignedIn, nextStep } = await signIn({
           username: cleanEmail,
           password: cleanPassword,
         });
 
-        // Handle cases where user might need to confirm email or change password
+        // Handle additional steps (like password resets or email verification)
         if (nextStep.signInStep === 'CONFIRM_SIGN_UP') {
-           setError("Please confirm your email before logging in.");
-           return;
+          setError("Account not confirmed. Please check your email for a code.");
+          return;
         }
 
         if (isSignedIn) {
-          // ✅ STEP 2: Retrieve session and token
           const session = await fetchAuthSession();
           jwt = session.tokens.accessToken.toString();
           localStorage.setItem('token', jwt);
           onLogin(jwt, cleanEmail);
         }
       } else {
-        // Local Backend Fallback
+        // Fallback for local dev
         const res = await axios.post(`${API_BASE}/auth/token`, {
-            email: cleanEmail,
-            password: cleanPassword
+          email: cleanEmail,
+          password: cleanPassword
         });
         jwt = res.data.access_token;
         localStorage.setItem('token', jwt);
@@ -54,13 +53,13 @@ function Login({ onLogin }) {
     } catch (err) {
       console.error("Cognito Auth Error:", err);
 
-      // ✅ Friendly Error Mapping
+      // ✅ User-Friendly Error Mapping
       if (err.name === 'NotAuthorizedException') {
-        setError("Invalid email or password. Please try again.");
+        setError("Invalid email or password.");
       } else if (err.name === 'UserNotFoundException') {
-        setError("No account found with this email.");
+        setError("Account not found.");
       } else {
-        setError(err.message || 'An unexpected error occurred.');
+        setError(err.message || "An authentication error occurred.");
       }
     } finally {
       setLoading(false);
