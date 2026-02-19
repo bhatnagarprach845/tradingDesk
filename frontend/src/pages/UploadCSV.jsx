@@ -10,7 +10,7 @@ import {
 } from '@mui/icons-material';
 import { DataGrid } from "@mui/x-data-grid";
 import { generateClient } from 'aws-amplify/data';
-import { deleteUser } from 'aws-amplify/auth';
+import { getCurrentUser, deleteUser, fetchAuthSession } from 'aws-amplify/auth';
 
 const client = generateClient();
 
@@ -45,8 +45,9 @@ export default function Upload() {
   const handleDeleteAccount = async () => {
     try {
       setLoading(true);
-      // 1. Verify session exists first
-        await getCurrentUser();
+      // 1. Verify the user is actually signed in
+    const user = await getCurrentUser();
+    console.log("Deleting user:", user.username);
 
         // 2. Perform deletion
         await deleteUser();
@@ -56,7 +57,11 @@ export default function Upload() {
         window.location.href = "/login";
     } catch (err) {
       console.error("Deletion failed:", err);
-      alert("Failed to delete account. Please contact support.");
+    if (err.name === 'UserUnAuthenticatedException') {
+      alert("Your session has expired. Redirecting to login...");
+      window.location.href = "/login";
+    } else {
+      alert("Error: " + (err.message || "Could not delete account."));
     } finally {
       setLoading(false);
       setOpenDelete(false);
