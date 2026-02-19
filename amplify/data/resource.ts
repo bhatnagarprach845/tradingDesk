@@ -14,13 +14,13 @@ const schema = a.schema({
   .identifier(['email'])
   .authorization(allow => [
     allow.ownerDefinedIn("email"),
-    allow.custom(), // Allows the Authorizer to grant access to Admins
+    allow.group("Admin"), // Allows the Authorizer to grant access to Admins
   ]),
 
   adminFetchAllUsers: a.query()
     .returns(a.ref('User').array())
     .handler(a.handler.function(authFunction))
-    .authorization(allow => [allow.custom()]), // Validated by your role logic
+    .authorization(allow => [allow.group("Admin")]),
 
   login: a.query()
     .arguments({ email: a.string(), password: a.string() })
@@ -38,7 +38,7 @@ const schema = a.schema({
     .arguments({ csvData: a.string() })
     .returns(a.string())
     .handler(a.handler.function(pythonUpload))
-    .authorization(allow => [allow.custom()]), // Only valid token holders (Guests/Admins)
+    .authorization(allow => [allow.authenticated()]), // Only valid token holders (Guests/Admins)
 });
 
 export type Schema = ClientSchema<typeof schema>;
@@ -46,14 +46,12 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    defaultAuthorizationMode: "lambda", // Sets Lambda as the primary gatekeeper
+    // Switch to User Pool as primary for production if using Groups
+    defaultAuthorizationMode: "userPool",
+    apiKeyAuthorizationMode: { expiresInDays: 30 }, // Sets Lambda as the primary gatekeeper
     lambdaAuthorizationMode: {
       function: authorizerFunction,
       timeToLiveInSeconds: 0, // Set to 0 to disable 401 caching for instant updates
-    },
-// ADD THIS SECTION:
-    apiKeyAuthorizationMode: {
-      expiresInDays: 30,
     },
   },
 });

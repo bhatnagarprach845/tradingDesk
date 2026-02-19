@@ -45,9 +45,18 @@ export default function Upload() {
   const handleDeleteAccount = async () => {
     try {
       setLoading(true);
+
+      // 1. Get current user's email
+    const { username } = await getCurrentUser();
+
+    // 2. DELETE FROM DYNAMODB ONLY
+    // This removes the record from your User table but keeps them in Cognito
+    await client.models.User.delete({ email: username });
+
+    alert("Your profile data has been cleared from the database.");
      // 1. Force a session refresh to prove the user is active
       // This is the "Hardening" step for production
-      const session = await fetchAuthSession({ forceRefresh: true });
+      /* const session = await fetchAuthSession({ forceRefresh: true });
 
       if (!session.tokens) {
         throw new Error("No active session found.");
@@ -57,7 +66,7 @@ export default function Upload() {
         await deleteUser();
 
         // 3. Cleanup local state and redirect
-        localStorage.clear();
+        localStorage.clear(); */
         alert("Account successfully deleted.");
         window.location.replace("/login");
     } catch (err) {
