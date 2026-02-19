@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/data";
-import { Container, Typography, Paper, Box, CircularProgress, Alert,
-  Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-import { fetchAuthSession } from 'aws-amplify/auth';
-import { post } from 'aws-amplify/api'; // Import the raw post tool
-import { Amplify } from 'aws-amplify';
+import {
+  Container, Typography, Paper, Box, CircularProgress, Alert,
+  Table, TableBody, TableCell, TableHead, TableRow
+} from "@mui/material";
+// ✅ Import session and user helpers
+import { fetchAuthSession, getCurrentUser } from 'aws-amplify/auth';
 
 const client = generateClient();
 
@@ -15,50 +15,47 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    fetchUsers();
+    // ✅ Production Hardening: Verify session on mount
+    const init = async () => {
+      try {
+        await getCurrentUser(); // Check if user is logged in
+        await fetchUsers();
+      } catch (err) {
+        console.error("Not authenticated:", err);
+        window.location.href = "/login"; // Redirect if session is dead
+      }
+    };
+    init();
   }, []);
 
   const fetchUsers = async () => {
-  const config = Amplify.getConfig();
-  const endpoint = config.API?.GraphQL?.endpoint;
-
-  if (!endpoint) {
-    setError("API Configuration not found.");
-    setLoading(false);
-    return;
-  }
-
-  setLoading(true);
-  setError("");
+    setLoading(true);
+    setError("");
 
     try {
-      // 1. Retrieve the token and format it as 'Bearer <token>'
-      const rawToken = localStorage.getItem('token');
-      if (!rawToken) throw new Error("No session found. Please login.");
+      // ✅ FIX: Get the fresh JWT token directly from Amplify
+      const session = await fetchAuthSession();
+      const token = session.tokens?.accessToken?.toString();
 
-      const authHeader = `Bearer ${rawToken.trim()}`;
+      if (!token) throw new Error("Session expired. Please log in again.");
 
-      // 2. Use the typed client instead of raw fetch
-      // This automatically handles endpoint discovery and JSON parsing
+      const authHeader = `Bearer ${token}`;
+
+      // Call custom GraphQL query via the Gen 2 client
       const { data, errors } = await client.queries.adminFetchAllUsers(
-        {}, // Custom queries require an empty object if no arguments are defined
+        {},
         {
           authMode: 'lambda',
-          authToken: authHeader // Explicitly provide the token for the Lambda Authorizer
+          authToken: authHeader
         }
       );
 
-      // 3. Handle GraphQL errors (e.g., unauthorized fields)
-      if (errors) {
-        console.error("GraphQL Errors:", errors);
-        throw new Error(errors[0].message);
-      }
+      if (errors) throw new Error(errors[0].message);
 
-      // 4. Update state with the result (returns a flat array for custom queries)
       setUsers(data || []);
 
     } catch (err) {
-      console.error("Fetch Error:", err);
+      console.error("Admin Fetch Error:", err);
       setError(err.message || "Failed to fetch users.");
     } finally {
       setLoading(false);
@@ -66,39 +63,51 @@ export default function AdminDashboard() {
   };
 
   if (loading) return (
-    <Box display="flex" justifyContent="center" p={5}><CircularProgress /></Box>
+    <Box display="flex" justifyContent="center" alignItems="center" height="50vh">
+      <CircularProgress />
+    </Box>
   );
 
   return (
-    <Box p={3}>
-      <Typography variant="h4" gutterBottom>User Management</Typography>
+    <Container maxWidth="lg" sx={{ py: 5 }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>
+        User Management
+      </Typography>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
 
-      <Paper elevation={3}>
+      <Paper elevation={2} sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+          <TableHead sx={{ backgroundColor: '#f8f9fa' }}>
+            <TableRow>
               <TableCell><strong>Email</strong></TableCell>
               <TableCell><strong>Name</strong></TableCell>
-              <TableCell><strong>Joined</strong></TableCell>
+              <TableCell><strong>Joined Date</strong></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {users.map((user, i) => (
-              <TableRow key={i}>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.name || '—'}</TableCell>
-                <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
+            {users.length > 0 ? (
+              users.map((user, i) => (
+                <TableRow key={user.email || i} hover>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.name || '—'}</TableCell>
+                  <TableCell>
+                    {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'}
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} align="center">No users found.</TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </Paper>
-    </Box>
+    </Container>
   );
 }
