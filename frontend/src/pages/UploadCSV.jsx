@@ -45,8 +45,15 @@ export default function Upload() {
   const handleDeleteAccount = async () => {
     try {
       setLoading(true);
-      await deleteUser();
-      window.location.reload(); // Force redirect to login
+      // 1. Verify session exists first
+        await getCurrentUser();
+
+        // 2. Perform deletion
+        await deleteUser();
+
+        // 3. Cleanup local state and redirect
+        localStorage.clear();
+        window.location.href = "/login";
     } catch (err) {
       console.error("Deletion failed:", err);
       alert("Failed to delete account. Please contact support.");
