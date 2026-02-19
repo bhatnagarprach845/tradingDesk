@@ -28,10 +28,25 @@ function Login({ onLogin }) {
           password: cleanPassword,
         });
 
-        // Handle additional steps (like password resets or email verification)
-        if (nextStep.signInStep === 'CONFIRM_SIGN_UP') {
-          setError("Account not confirmed. Please check your email for a code.");
-          return;
+        // ✅ Handle the Force Password Change requirement
+        if (nextStep.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
+          const newPassword = prompt("A new password is required. Please enter a permanent password:");
+
+          if (newPassword) {
+            const result = await confirmSignIn({ challengeResponse: newPassword });
+            if (result.isSignedIn) {
+               // Proceed to fetch session as normal
+               const session = await fetchAuthSession();
+               jwt = session.tokens.accessToken.toString();
+               localStorage.setItem('token', jwt);
+               onLogin(jwt, cleanEmail);
+               return;
+            }
+          } else {
+            setError("You must change your password to continue.");
+            setLoading(false);
+            return;
+          }
         }
 
         if (isSignedIn) {
