@@ -28,6 +28,12 @@ function Login({ onLogin }) {
 
     try {
       let jwt = null;
+      // ✅ STEP 0: Clear any existing Amplify session to prevent the "AlreadyAuthenticated" error
+      try {
+        await signOut();
+      } catch (e) {
+        // Ignore if no one was signed in
+      }
 
       if (USE_AMPLIFY) {
         // ✅ Official Amplify Sign-In

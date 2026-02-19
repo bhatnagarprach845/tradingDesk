@@ -21,13 +21,12 @@ export default function AdminDashboard() {
         // Cognito stores groups in the 'payload' of the access/id token
         const groups = session.tokens.accessToken.payload['cognito:groups'] || [];
 
-        if (!groups.includes('Admin')) {
-          setError("Access Denied: You do not have administrator privileges.");
-          setLoading(false);
-          // Optional: Redirect away
-          // window.location.href = "/dashboard";
+        if (groups.includes('Admin')) {
+          // ✅ Success: The user is a confirmed Admin
+          fetchUsers();
         } else {
-          await fetchUsers();
+          // ❌ Denied: User is logged in, but not an Admin
+          setError("Access Denied.");
         }
       } catch (err) {
         setError("Session expired. Please log in.");
