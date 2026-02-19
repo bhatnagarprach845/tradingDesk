@@ -45,9 +45,13 @@ export default function Upload() {
   const handleDeleteAccount = async () => {
     try {
       setLoading(true);
-      // 1. Verify the user is actually signed in
-    const user = await getCurrentUser();
-    console.log("Deleting user:", user.username);
+     // 1. Force a session refresh to prove the user is active
+      // This is the "Hardening" step for production
+      const session = await fetchAuthSession({ forceRefresh: true });
+
+      if (!session.tokens) {
+        throw new Error("No active session found.");
+      }
 
         // 2. Perform deletion
         await deleteUser();
@@ -55,14 +59,17 @@ export default function Upload() {
         // 3. Cleanup local state and redirect
         localStorage.clear();
         alert("Account successfully deleted.");
-        window.location.href = "/login";
+        window.location.replace("/login");
     } catch (err) {
       console.error("Deletion failed:", err);
-    if (err.name === 'UserUnAuthenticatedException' || err.message?.includes('authenticated')) {
-        // Use a slight delay or confirm to ensure the user sees the message
-        alert("Your session has expired. Redirecting to login page now...");
+      // Check if it's an Auth error
+      const isAuthError = err.name === 'UserUnAuthenticatedException' ||
+                          err.message?.toLowerCase().includes('authenticated');
+    if (isAuthError) {
+        // Clear local storage so the login page doesn't try to use old tokens
         localStorage.clear();
-        window.location.assign("/login"); // More forceful redirection
+        alert("For security, please log in one last time to confirm account deletion.");
+        window.location.replace("/login");
       } else {
         alert("Error: " + (err.message || "Could not delete account."));
       }

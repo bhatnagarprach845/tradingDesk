@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { generateClient } from 'aws-amplify/data';
+import { signIn } from 'aws-amplify/auth'; // ✅ REQUIRED for deleteUser to work
 import axios from 'axios';
 import { API_BASE, USE_AMPLIFY } from '../api';
 
@@ -18,16 +18,19 @@ function Login({ onLogin }) {
       let jwt = null;
 
       if (USE_AMPLIFY) {
-        const client = generateClient();
-        const loginGql = `query Login($email: String!, $password: String!) {
-          login(email: $email, password: $password)
-        }`;
-        const res = await client.graphql({
-          query: loginGql,
-          variables: { email, password },
-          authMode: 'apiKey'//'identityPool'
+        // ✅ CORRECT WAY: Use Amplify Auth to sign in
+        // This populates the internal library state for deleteUser()
+        const { isSignedIn, nextStep } = await signIn({
+          username: email,
+          password: password,
         });
-        jwt = res.data.login;
+
+        if (isSignedIn) {
+          // Now that Amplify is logged in, we grab the token for your Lambda logic
+          const session = await fetchAuthSession();
+          jwt = session.tokens.accessToken.toString();
+          localStorage.setItem('token', jwt);
+        }
       } else {
         const res = await axios.post(`${API_BASE}/auth/token`, { email, password });
         jwt = res.data.access_token;
@@ -39,7 +42,8 @@ function Login({ onLogin }) {
       else setError('Login failed: Invalid credentials');
     } catch (err) {
       console.error("Auth Error:", err);
-      setError(err.response?.data?.detail || 'Server error occurred');
+      // Handle Cognito specific errors (like UserNotFoundException)
+      setError(err.message || 'Server error occurred');
     } finally {
       setLoading(false);
     }
