@@ -15,17 +15,26 @@ export default function AdminDashboard() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // ✅ Production Hardening: Verify session on mount
-    const init = async () => {
+    const checkAdminAccess = async () => {
       try {
-        await getCurrentUser(); // Check if user is logged in
-        await fetchUsers();
+        const session = await fetchAuthSession();
+        // Cognito stores groups in the 'payload' of the access/id token
+        const groups = session.tokens.accessToken.payload['cognito:groups'] || [];
+
+        if (!groups.includes('Admin')) {
+          setError("Access Denied: You do not have administrator privileges.");
+          setLoading(false);
+          // Optional: Redirect away
+          // window.location.href = "/dashboard";
+        } else {
+          await fetchUsers();
+        }
       } catch (err) {
-        console.error("Not authenticated:", err);
-        window.location.href = "/login"; // Redirect if session is dead
+        setError("Session expired. Please log in.");
+        setLoading(false);
       }
     };
-    init();
+    checkAdminAccess();
   }, []);
 
   const fetchUsers = async () => {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { signIn } from 'aws-amplify/auth'; // ✅ REQUIRED for deleteUser to work
+import { signIn, confirmSignIn, fetchAuthSession, resetPassword, confirmResetPassword } from 'aws-amplify/auth'; // ✅ REQUIRED for deleteUser to work
 import axios from 'axios';
 import { API_BASE, USE_AMPLIFY } from '../api';
 
@@ -80,6 +80,33 @@ function Login({ onLogin }) {
       setLoading(false);
     }
   };
+
+const handleForgotPassword = async () => {
+    const emailToReset = prompt("Please enter your email:");
+    if (!emailToReset) return;
+
+    try {
+      await resetPassword({ username: emailToReset.trim() });
+      const code = prompt("Enter the 6-digit code sent to your email:");
+      const newPass = prompt("Enter your new permanent password:");
+
+      if (code && newPass) {
+        await confirmResetPassword({
+          username: emailToReset.trim(),
+          confirmationCode: code,
+          newPassword: newPass
+        });
+        alert("Password reset successfully! You can now log in.");
+      }
+    } catch (err) {
+      alert("Reset failed: " + err.message);
+    }
+  };
+
+  // Add this inside your return() after the Submit button:
+  <Button onClick={handleForgotPassword} sx={{ mt: 1, textTransform: 'none' }}>
+    Forgot Password?
+  </Button>
 
   return (
     <form onSubmit={handleSubmit} style={{maxWidth: '400px', margin: '20px auto'}}>
