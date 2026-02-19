@@ -309,14 +309,15 @@ export default function Upload() {
   return (
     <ThemeProvider theme={theme}>
       <Container maxWidth="lg" sx={{ paddingY: 5 }}>
-        <Typography variant="h4" align="center" gutterBottom>FIFO SaaS Dashboard</Typography>
-        <Button
-            color="error"
-            startIcon={<DeleteForever />}
-            onClick={() => setOpenDelete(true)}
-          >
-            Delete Account
-          </Button>
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+            <Typography variant="h4" align="center" gutterBottom>FIFO SaaS Dashboard</Typography>
+            <Button
+                color="error"
+                startIcon={<DeleteForever />}
+                onClick={() => setOpenDelete(true)}
+              >
+                Delete Account
+              </Button>
         </Box>
 
         {/* Account Deletion Confirmation */}
