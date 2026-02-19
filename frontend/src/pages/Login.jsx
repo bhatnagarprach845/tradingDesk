@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
 import { signIn, confirmSignIn, fetchAuthSession, resetPassword, confirmResetPassword } from 'aws-amplify/auth'; // ✅ REQUIRED for deleteUser to work
+import {
+  Box,
+  Typography,
+  TextField,
+  Button, // ✅ Add this
+  CircularProgress,
+  Alert
+} from "@mui/material";
 import axios from 'axios';
 import { API_BASE, USE_AMPLIFY } from '../api';
 
@@ -117,6 +125,14 @@ const handleForgotPassword = async () => {
       <button type="submit" disabled={loading} style={{width: '100%', padding: '10px'}}>
         {loading ? 'Authenticating...' : 'Login'}
       </button>
+      {/* ✅ Forgot Password Button */}
+      <Button
+        fullWidth
+        onClick={handleForgotPassword}
+        sx={{ mt: 1, textTransform: 'none' }}
+      >
+        Forgot Password?
+      </Button>
     </form>
   );
 }
