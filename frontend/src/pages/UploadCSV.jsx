@@ -62,7 +62,8 @@ export default function Upload() {
       window.location.href = "/login";
     } else {
       alert("Error: " + (err.message || "Could not delete account."));
-    } finally {
+    }
+  } finally {
       setLoading(false);
       setOpenDelete(false);
     }
