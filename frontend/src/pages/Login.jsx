@@ -87,7 +87,14 @@ function Login({ onLogin }) {
         setError("Invalid email or password.");
       } else if (err.name === 'UserNotFoundException') {
         setError("Account not found.");
-      } else {
+      }
+        else if (err.name === 'UserAlreadyAuthenticatedException') {
+        // Fallback: If they are already logged in, just sync the session and move on
+        const session = await fetchAuthSession();
+        const jwt = session.tokens.accessToken.toString();
+        localStorage.setItem('token', jwt);
+        onLogin(jwt, email.trim());
+        } else {
         setError(err.message || "An authentication error occurred.");
       }
     } finally {
