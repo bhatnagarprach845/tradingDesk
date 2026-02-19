@@ -54,15 +54,18 @@ export default function Upload() {
 
         // 3. Cleanup local state and redirect
         localStorage.clear();
+        alert("Account successfully deleted.");
         window.location.href = "/login";
     } catch (err) {
       console.error("Deletion failed:", err);
-    if (err.name === 'UserUnAuthenticatedException') {
-      alert("Your session has expired. Redirecting to login...");
-      window.location.href = "/login";
-    } else {
-      alert("Error: " + (err.message || "Could not delete account."));
-    }
+    if (err.name === 'UserUnAuthenticatedException' || err.message?.includes('authenticated')) {
+        // Use a slight delay or confirm to ensure the user sees the message
+        alert("Your session has expired. Redirecting to login page now...");
+        localStorage.clear();
+        window.location.assign("/login"); // More forceful redirection
+      } else {
+        alert("Error: " + (err.message || "Could not delete account."));
+      }
   } finally {
       setLoading(false);
       setOpenDelete(false);
