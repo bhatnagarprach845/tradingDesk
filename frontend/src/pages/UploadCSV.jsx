@@ -47,11 +47,11 @@ export default function Upload() {
       setLoading(true);
 
       // 1. Get current user's email
-    const { username } = await getCurrentUser();
+    const myEmail = localStorage.getItem('userEmail');
 
     // 2. DELETE FROM DYNAMODB ONLY
     // This removes the record from your User table but keeps them in Cognito
-    await client.models.User.delete({ email: username });
+    await client.models.User.delete({ email: myEmail });
 
     alert("Your profile data has been cleared from the database.");
      // 1. Force a session refresh to prove the user is active
